@@ -1,0 +1,36 @@
+Regolamento Pinnacola
+ 
+La pinnacola si gioca con 2 mazzi di 52 carte francesi, a coppie contrapposte. Il cartaio distribuisce 13 carte coperte per ciascuno, il resto del mazzo si mette al centro e si scopre la prima carta. 
+Ogni giocatore a turno deve pescare una carta dal mazzo o dal pozzo, inserirla fra quelle che ha in mano, eventualmente calare una o più combinazioni e infine scartare una carta scoperta. 
+A pinnacola ogni giocatore deve formare combinazioni da calare sul tavolo o attaccarsi alle combinazioni già calate, sue o del partner così da liberarsi delle carte: lo scopo è di fare più punti possibile attraverso le carte e le combinazioni di maggior valore. Se il giocatore ha una o più combinazioni in mano, può decidere di calarle quando vuole, anche alla prima mano.
+Le combinazioni possono essere: scale con un minimo di tre carte; tris o poker di carte uguali con diverso seme. Se non ha calato almeno una combinazione di tre carte non può prendere le carte dal pozzo né attaccare carte al partner. 
+Le carte scartate vanno poste in fila e non in pila, per dar modo di poter prendere dal pozzo qualsiasi carta scartata dagli altri. Nel prendere una carta dal pozzo che non sia quella appena scartata, si dovranno prendere anche tutte le altre carte scartate dopo di essa con l'obbligo di formare la combinazione solo con la prima carta e metterla a terra. È possibile sostituire i jolly a terra (sia i propri che quelli degli avversari) con l'obbligo di fare una combinazione con essi e metterli a terra subito. 
+La mano finisce quando un giocatore ha chiuso, cioè non ha più carte in mano: questi deve contare i punti delle carte sul tavolo, sue e del partner, sottraendo il valore in punti delle carte rimaste al suo partner. 
+La prima carta scoperta dopo la smazzata iniziale, se presa, deve essere calata. Quando finisce il mazzo di carte da pescare, il giocatore che preleva l’ultima carta, sviluppa il suo gioco e sul suo scarto finisce la partita; in questo caso non vengono conteggiati i 100 punti della chiusura. La presa delle carte scoperte in tavola, può essere fatta una sola volta dal giocatore durante il suo turno di gioco. Non è ammessa la chiusura in prima mano. 
+I due avversari devono contare i punti delle carte sul tavolo e sottrarre i punti delle carte che hanno in mano. I quatris raddoppiano il proprio valore come le scale composte da 7 carte ed oltre se prive di jolly. Si può anche chiudere in mano, formando con le 13 carte combinazioni che si calano in un colpo solo. Se un giocatore “chiude in mano” raddoppia i punti delle carte che ha messo sul tavolo e ottiene 200 punti in più. Se il suo compagno ha aperto, raddoppia i punti delle carte sul tavolo; se non ha aperto, paga una penale di 100 punti. Ciascuno degli avversari, se ha aperto, calcola i punti normalmente, se non ha aperto, paga una penale di 200 punti. 
+Vince la coppia che raggiunge per prima i: 1500, 2000 o 2500 punti in base agli accordi presi ad inizio partita.
+ 
+Conteggio dei punti
+ 
+Carte         Punti
+
+dal 2 al 5      5 punti
+
+dal 6 al K      10 punti
+
+Asso            15 punti
+
+Punti speciali:
+poker di carte da 5 punti è pinnacola da 40 punti;
+poker di carte da 10 punti è pinnacola da 80 punti;
+poker d'assi è pinnacola da 120 punti;
+poker di jolly vale 400 punti (bisogna calare i 4 jolly tutti in una volta);
+scala da 7 o più carte senza jolly è pinnacola e i punti delle carte raddoppiano;
+scala completa da asso ad asso vale 600 punti.
+
+Regole speciali per torneo
+lo scarto deve avvenire entro 2 minuti dall’avvio del singolo turno di gioco, ovvero dallo scarto del giocatore precedente. 
+Ogni singola partita durerà al massimo 2 ore. Allo scadere del tempo di due ore viene chiusa la competizione sospendendo la partita e contando il punteggio. I punti in mano allo scadere del tempo regolamentare costituiscono penalità.
+Il giocatore che con parole, gesti e segnalazioni influenza il gioco, viene penalizzato di 100 punti.
+Il conteggio dei punteggi e delle carte rimaste viene effettuato sotto il controllo dei 4 giocatori.
+In caso di contestazioni vale il giudizio inappellabile dell’arbitro designato dall’organizzazione.
