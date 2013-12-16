@@ -54,8 +54,8 @@ No game functionality yet, working on graphic interface.
 Thanks
 ------
 
-The modest contents of this directory owe much to Tarek Ziadé's excellent book
-'Expert Python Programming', which improved the way I work with Python every
-day.
+Intro loop music from PlayOnLoop.com
+
+
 
 

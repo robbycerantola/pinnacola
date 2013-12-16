@@ -61,6 +61,7 @@ from kivy.uix.label import Label
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.lang import Builder
+from kivy.core.audio import SoundLoader
 
 import random
 import re
@@ -75,6 +76,10 @@ NAMES = []
 DECKINSTANCE = None
 PLAYERINSTANCE = None
 SELCARDS = []
+
+
+
+
 
 #:PEP8 -W293
 
@@ -130,7 +135,7 @@ Builder.load_string("""
         Button:
             background_color: (1,1,1,.5)
             text: 'Play game'
-            on_press: root.manager.current = 'pinnacolabackground'
+            on_press: root.manager.current = 'pinnacolabackground'; app.sound.stop()
         Button:
             background_color: (1,1,1,.5)
             text: 'Rules of game'
@@ -158,7 +163,7 @@ Builder.load_string("""
             pos_hint: { 0.5: "center_x" }
             background_color: (1,1,1,.5)
             text: 'Play game'
-            on_press: root.manager.current = 'pinnacolabackground'
+            on_press: root.manager.current = 'pinnacolabackground'; app.sound.stop()
 
 <SettingsScreen>:
     BoxLayout:
@@ -279,9 +284,11 @@ Builder.load_string("""
     Button:
         text: 'Pick me!'
         background_normal: 'atlas://decks/cards/br'
-        pos: 180,250
-        size_hint: .07,.14
-        #size: .07,.14
+        #pos: 175, 250
+        pos_hint: {'x': .2,'y':.5}
+        size_hint: None, None
+        height: dp(90)
+        width: dp(60)
         on_press:app.showcard()
         
     BoxLayout:
@@ -306,14 +313,14 @@ Builder.load_string("""
             text: 'Put down'
             on_press:app.putontable(app.player[0])
         Button:
-            text: 'Unselect all'
+            text: 'Unselect'
             on_press:app.unselectall()
         Button:
             text: 'Attach'
             on_press:app.attach(app.player[0])
         Button:
-            text: 'test'
-            on_press:root.manager.current = 'player2'
+            text: 'Status'
+            on_press:app.status()
             
     FloatLayout:
         Button:
@@ -321,7 +328,10 @@ Builder.load_string("""
             background_normal: 'decks/backcards.png'
             text: '4'
             pos_hint: {'x': .8,'y': .5}
-            size_hint: .3,.3
+            #size_hint: .2,.2
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
             on_press:root.manager.current = 'player4'
         Button:
             #background_color: (1,1,1,.5)
@@ -329,14 +339,20 @@ Builder.load_string("""
             text: '2'
             pos_hint: {'x': .0,'y':.5}
             #pos_hint: {'center_y':1}
-            size_hint: .21,.21
+            #size_hint: .2,.2
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
             on_press:root.manager.current = 'player2'
         Button:
             #background_color: (1,1,1,.5)
             background_normal: 'decks/backcards.png'
             text: '3'
             pos_hint: {'x': .4,'y':.7}
-            size_hint: .2,.2
+            #size_hint: .2,.2
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
             on_press:root.manager.current = 'player3'
 
 """)
@@ -429,7 +445,7 @@ class Player():
 
     def playcard(self, card):
         self.hand.remove(card)
-    
+
     def hand(self):
         return self.hand
         
@@ -437,20 +453,16 @@ class Player():
         self.down.append(cards)
         #calculate player's points
         for card in cards:
-            self.points += int(Deck.points_table[card[:-2]])
-    
+            #self.points += int(Deck.points_table[card[:-2]])
+            self.addpoints(card)
+
     def down(self):
         return self.down
 
-    def attach(self):
-        '''Add a card to on table cards to get more points'''
-        # TODO
-        # get selected card
-        # ask where to add
-        # check if it is legal
-        # add
-        # calculate points
-        pass
+    def addpoints(self,card):
+        self.points += int(Deck.points_table[card[:-2]])
+        #Info.showpoints()
+
 
 
 class Picture(Scatter):
@@ -532,7 +544,12 @@ class PinnacolaApp(App):
     player = {}
     connection = None
     picture = None
+    # cards currently selected
     selcards = []
+    sound = SoundLoader.load('./music/intro.wav')
+    if sound:
+        sound.loop = True
+        sound.play()
 
     def build(self):
         global max_cards
@@ -746,36 +763,19 @@ class PinnacolaApp(App):
 
     def putontable(self,player):
         '''cancella dalla mano le carte calate in tavola'''
-        print 'Put on table',self.selcards
+        if DEBUG: print 'Put on table',self.selcards
         if len(self.selcards) >= 3:
             a=self.check_if_valid(self.selcards)
-            if a > 0:
+            if a:
                 player.putdown(self.selcards)  # aggiorna carte scoperte
                 for i in self.selcards:
                     player.deletecard(i)
-                    for child in sm.get_screen('pinnacolabackground').children:
-                    ###for child in self.root.children:
-                        try:
-                            if child.card == i:
-                                #child.scale=0.6
-                                anim = Animation(scale=0.6,t='out_back')
-                                anim.start(child)
-                                child.do_translation = False
-
-                        except:
-                            pass
-                self.unselectall()  ###
+                    self.animation(i)
             else:
-                if DEBUG: print'Invalid'
                 self.info.showinfo('Invalid!!')
-            self.unselectall()
+            self.unselectall();print "unselect all by putontable()"
             self.info.showpoints()
-            if DEBUG:
-                print "In hand", player.hand
-                print "Down", player.down
-                print "Points:", self.player[0].points
         else:
-            if DEBUG: print "Minimum 3 cards !!"
             self.info.showinfo('Select minimum 3 cards !!')
 
 
@@ -787,7 +787,7 @@ class PinnacolaApp(App):
         tcards = ""
         pcards = []
         deleted = None
-        print "Checking",cards
+        if DEBUG: print "Checking",cards
         number = (cards[0][:-2])
         seed = (cards[0][:-1][-1])
         #print number,seed
@@ -811,11 +811,11 @@ class PinnacolaApp(App):
                     deleted = None
 
         if len(pcards) != len(set(pcards)): #duplicate same number and same seed
-            print'Duplicate found'
+            if DEBUG: print'Duplicate found'
             valid = 0
 
         if valid == 1:
-            print 'Same number'
+            if DEBUG: print 'Same number'
             return valid
 
         #check for same seed
@@ -836,19 +836,17 @@ class PinnacolaApp(App):
                 valid = 0
                 return valid
             oldcard = card
-        print'Same seed'
-        print tcards
+        if DEBUG:
+            print'Same seed'
+            print tcards
 
         m=re.search(tcards, rightorder)
         if m:
             if m.group(0):
                 valid=1
-                print "RE says it's valid!", m.group(0)
+                if DEBUG: print "RE says it's valid!", m.group(0)
 
         return valid
-
-    def attach(self, player):
-        pass
 
     def unselectall(self):
         for child in sm.get_screen('pinnacolabackground').children:
@@ -871,6 +869,53 @@ class PinnacolaApp(App):
     def on_selected(self, *args):
         print 'selected', args
 
+    def animation(self,i):
+        '''create animation for every card going on table'''
+        for child in sm.get_screen('pinnacolabackground').children:
+                        try:
+                            if child.card == i:
+                                # unbind callback_pos to avoid selection
+                                # when moving because of the animation
+                                child.unbind(pos=self.callback_pos)
+                                anim = Animation(scale=0.6,t='out_back')
+                                anim.start(child)
+                                child.do_translation = False
+
+                        except:
+                            pass
+
+    def attach(self, player):
+        '''Add a card to on table cards to get more points'''
+        # get selected card
+        if len(self.selcards) == 1:
+            cardtoattach = self.selcards[0]
+            # find where to add
+            for group in player.down:
+                newgroup = group
+                newgroup.append(cardtoattach)
+                if self.check_if_valid(newgroup):
+                    print "Found", newgroup
+                    group = newgroup
+                    player.deletecard(cardtoattach)
+                    player.addpoints(cardtoattach)
+                    self.animation(cardtoattach)
+                    break
+                else:
+                    newgroup = [cardtoattach]
+                    newgroup.append(group)
+                    if self.check_if_valid(newgroup):
+                        print "Found", newgroup
+                        group = newgroup
+                        player.deletecard(cardtoattach)
+                        player.addpoints(cardtoattach)
+                        self.animation(cardtoattach)
+                        break
+
+        else:
+            print "Only attach a card at a time, please...."
+        # TODO        
+        # check if it works as expected in all situations
+
     def handle_message(self, msg):
         if DEBUG: print 'received message', msg
         if msg == "getcards-player1": msg = str(self.player[1].hand)
@@ -883,16 +928,23 @@ class PinnacolaApp(App):
         if msg and self.connection:
             self.connection.write(str("paperino"))
 
+    def status(self):
+        '''Print on console data'''
+        print "STATUS: selected", self.selcards
+        print "      : on hand ", self.player[0].hand
+        print "      : down    ", self.player[0].down
+        print "      : points  ", self.player[0].points
+        print "      : pit     ", self.currentDeck.ontable
 
-class Info():
+class Info(Label):
     '''put some info on screen'''
     def __init__(self, root):
         self.layout = AnchorLayout(anchor_x='center', anchor_y='center')
         self.infotext = Label(text='Your turn, pick a card from Deck or Pit.')
         self.layout.add_widget(self.infotext)
         root.add_widget(self.layout)
-        self.layout2 = AnchorLayout(anchor_x='right', anchor_y='bottom')
-        self.pointstext = Label(text='Points:0')
+        self.layout2 = FloatLayout()
+        self.pointstext = Label(text='Points:0', pos=(200,10))
         self.layout2.add_widget(self.pointstext)
         root.add_widget(self.layout2)
 
