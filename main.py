@@ -89,6 +89,8 @@ Builder.load_string("""
 #:kivy 1.0
 #:import kivy kivy
 #:import win kivy.core.window
+#:import SlideTransition kivy.uix.screenmanager.SlideTransition
+#:import FadeTransition kivy.uix.screenmanager.FadeTransition
 
 <Picture>:
     # each time a picture is created, the image can delay the loading
@@ -139,7 +141,7 @@ Builder.load_string("""
         Button:
             background_color: (1,1,1,.5)
             text: 'Rules of game'
-            on_press: root.manager.current = 'rules'
+            on_press:root.manager.transition = FadeTransition(); root.manager.current = 'rules'
     BoxLayout:
         Label:
             color: (0,0,0,1)
@@ -332,7 +334,7 @@ Builder.load_string("""
             size_hint: None, None
             height: dp(80)
             width: dp(100)
-            on_press:root.manager.current = 'player4'
+            on_press:root.manager.transition = SlideTransition(direction="right");root.manager.current = 'player4'
         Button:
             #background_color: (1,1,1,.5)
             background_normal: 'decks/backcards.png'
@@ -343,7 +345,7 @@ Builder.load_string("""
             size_hint: None, None
             height: dp(80)
             width: dp(100)
-            on_press:root.manager.current = 'player2'
+            on_press:root.manager.transition = SlideTransition(direction="left");root.manager.current = 'player2'
         Button:
             #background_color: (1,1,1,.5)
             background_normal: 'decks/backcards.png'
@@ -353,7 +355,7 @@ Builder.load_string("""
             size_hint: None, None
             height: dp(80)
             width: dp(100)
-            on_press:root.manager.current = 'player3'
+            on_press:root.manager.transition = SlideTransition(direction="up");root.manager.current = 'player3'
 
 """)
 
@@ -886,6 +888,11 @@ class PinnacolaApp(App):
 
     def attach(self, player):
         '''Add a card to on table cards to get more points'''
+        def common(card):
+            #helper function
+            player.deletecard(card)
+            player.addpoints(card)
+            self.animation(card)
         # get selected card
         if len(self.selcards) == 1:
             cardtoattach = self.selcards[0]
@@ -894,11 +901,11 @@ class PinnacolaApp(App):
                 newgroup = group
                 newgroup.append(cardtoattach)
                 if self.check_if_valid(newgroup):
-                    print "Found", newgroup
                     group = newgroup
-                    player.deletecard(cardtoattach)
-                    player.addpoints(cardtoattach)
-                    self.animation(cardtoattach)
+                    common(cardtoattach)
+                    #player.deletecard(cardtoattach)
+                    #player.addpoints(cardtoattach)
+                    #self.animation(cardtoattach)
                     break
                 else:
                     newgroup = [cardtoattach]
@@ -906,9 +913,10 @@ class PinnacolaApp(App):
                     if self.check_if_valid(newgroup):
                         print "Found", newgroup
                         group = newgroup
-                        player.deletecard(cardtoattach)
-                        player.addpoints(cardtoattach)
-                        self.animation(cardtoattach)
+                        common(cardtoattach)
+                        #player.deletecard(cardtoattach)
+                        #player.addpoints(cardtoattach)
+                        #self.animation(cardtoattach)
                         break
 
         else:
