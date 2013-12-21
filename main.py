@@ -27,7 +27,7 @@ __version__ = '0.5'
 #v 0.2 implement screen manager
 #v 0.3 registra le carte calate
 #v 0.4 multiple screens
-#v 0.5 cleaning  code
+#v 0.5 cleaning and debugging
 
 import kivy
 kivy.require('1.1.2')
@@ -62,6 +62,7 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.lang import Builder
 from kivy.core.audio import SoundLoader
+from kivy.clock import Clock
 
 import random
 import re
@@ -645,9 +646,14 @@ class PinnacolaApp(App):
         try:
             # load the image
             picture = Picture(source='atlas://decks/cards/%s' % entry[:-1], scale=0.7,do_rotation=False, x=200 , y=200, card=entry)
+            def picbind(dt,picture=picture):
+                #helper function to bind to changes on pos after an animation takes place
+                picture.bind(pos=self.callback_pos)
             anim = Animation(x=300, y=50, scale=1)
             anim.start(picture)
-            picture.bind(pos=self.callback_pos)
+            #picture.bind(pos=self.callback_pos)
+            # binding to callback_pos after animation is completed
+            Clock.schedule_once(picbind,2)
             # add to the main field
             sm.get_screen('pinnacolabackground').add_widget(picture)
             #self.root.add_widget(picture)
@@ -718,6 +724,10 @@ class PinnacolaApp(App):
     def callback_pos(self,instance,value):
         #se la carta viene trascinata nella discard zone allora viene scartata
         #se viene trascinata fuori dalla discard zone allora viene pescata
+        def rebind(dt,inst=instance):
+            #helper function to rebind to changes on pos after an animation
+            inst.bind(pos=self.callback_pos)
+        
         card=instance.card
         instance.selected='yes'
         self.info.showinfo('') #clear info
@@ -727,17 +737,22 @@ class PinnacolaApp(App):
             instance.c=.2  #change property c ->color
 
         #scarta una carta nel pozzo    
-        if value[1] > DISCARDY-30 and value[0] >200 and self.flag==0 and instance.condition <>'pit':
+        if value[1] > DISCARDY-30 and value[0] >200 and self.flag == 0 and instance.condition <> 'pit':
             if DEBUG:print 'Discarded', card
             self.currentDeck.put_ontable(card) #aggiunge al pozzo
             self.player[0].deletecard(card)  #toglie al giocatore
-            instance.selected='no'
-            instance.condition='pit'
+            instance.selected = 'no'
+            instance.condition = 'pit'
             self.numDiscarded += 1
-            self.flag=1
+            self.flag = 1
+            self.unselectall()
             #animazione
             anim = Animation(x=230+10*self.numDiscarded,y=DISCARDY, rotation=0,scale=0.7,t='out_back')
+            # unbind to avoid triggering callback_pos
+            instance.unbind(pos=self.callback_pos)
             anim.start(instance)
+            # binding again to callback_pos after animation is completed
+            Clock.schedule_once(rebind,2)
             self.msg_sendontable(card) #informa i client 
 
             if DEBUG:print "Pit:" ,self.currentDeck.ontable 
@@ -865,6 +880,7 @@ class PinnacolaApp(App):
         if touch.is_double_tap:
             if DEBUG: print 'Double tap'
             self.unselectall()
+            return False
 
         #print instance,touch,instance.card,instance.condition
 
@@ -938,12 +954,12 @@ class PinnacolaApp(App):
 
     def status(self):
         '''Print on console data'''
-        print "STATUS: selected", self.selcards
-        print "      : on hand ", self.player[0].hand
-        print "      : down    ", self.player[0].down
-        print "      : points  ", self.player[0].points
-        print "      : pit     ", self.currentDeck.ontable
-
+        print "S: selected", self.selcards
+        print "T: on hand ", self.player[0].hand
+        print "A: down    ", self.player[0].down
+        print "T: points  ", self.player[0].points
+        print "U: pit     ", self.currentDeck.ontable
+        print "S:"
 class Info(Label):
     '''put some info on screen'''
     def __init__(self, root):
