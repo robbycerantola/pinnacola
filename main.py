@@ -21,7 +21,7 @@ This is a basic pinnacola cards game, using the scatter widget.
 
 '''
 
-__version__ = '0.7'
+__version__ = '0.7b'
 #v 0.0 deck, userinterface
 #v 0.1 simple net messages (Twisted), server only
 #v 0.2 implement screen manager
@@ -30,6 +30,7 @@ __version__ = '0.7'
 #v 0.5 cleaning and debugging
 #v 0.6 started client implementation
 #v 0.7 beta playable in two players, no rules check yet.
+#v 0.7b server ip selectable in settings 
 
 import kivy
 kivy.require('1.1.2')
@@ -80,7 +81,7 @@ DEBUG = 1
 PLAYERS = 4
 DISCARDY = 250
 GAMEMODE = None
-SERVER = '192.168.1.65'
+SERVER = ''
 PORT = 8123
 CONNECTION = {}
 NAMES = []
@@ -323,13 +324,13 @@ Builder.load_string("""
             text: 'Points: %s' %root.points
         
         Button:
-            text: 'Put down'
+            text: 'Drop'
             on_press:app.putontable(app.player[0])
         Button:
             text: 'Unselect'
             on_press:app.unselectall()
         Button:
-            text: 'Attach'
+            text: 'Stick'
             on_press:app.attach(app.player[0])
         Button:
             text: 'Status'
@@ -514,7 +515,6 @@ class PinnacolaBackground(Screen):
 class IntroScreen(Screen):
     #global GAMEMODE
     ver = __version__
-    print "GGGGGGGGGGGGGGGGGGGG", GAMEMODE
     string = " %s mode:connecting..." % GAMEMODE
     
     info = StringProperty(string)
@@ -574,13 +574,14 @@ class PinnacolaApp(App):
         pass
 
     def build(self):
-        global max_cards, GAMEMODE
+        global max_cards, GAMEMODE, SERVER
         #load configurations from ini file
         config = self.config
         max_cards = int(config.get('section1', 'max_cards'))
         if GAMEMODE is None: 
             GAMEMODE = config.get('section1', 'gamemode')
         self.playername = config.get('section1', 'name')
+        SERVER = config.get('section1', 'serverip')
         self.gamemode = GAMEMODE
         # card y position and discarded flag
         self.numDiscarded = self.oldvalue = self.flag = 0
@@ -749,6 +750,7 @@ class PinnacolaApp(App):
         config.set('section1', 'max_cards', '13')
         config.set('section1','gamemode','Server')
         config.set('section1','name','')
+        config.set('section1','serverip','')
 
     def build_settings(self, settings):
         """create configuration pannel"""
@@ -762,29 +764,43 @@ class PinnacolaApp(App):
                 "desc": "Player name",
                 "section":"section1",
                 "key": "name"},
+                
                 {"type": "options",
                 "title": "Start cards",
                 "desc": "Number of cards in hand that we start with",
                 "section":"section1",
                 "key": "max_cards",
                 "options": ["13","15"]},
+                
                 {"type": "options",
                 "title": "Play mode",
                 "desc": "Act as Server or client ",
                 "section":"section1",
                 "key": "gamemode",
-                "options": ["Server","Client"]}
+                "options": ["Server","Client"]},
+                
+                {"type": "string",
+                "title": "Server ip",
+                "desc": "When playing as a client, this is the server ip address to connect to.",
+                "section": "section1",
+                "key": "serverip"}
                    ]"""
         settings.add_json_panel('Pinnacola',self.config, data=jsondata)
 
     def on_config_change(self, config, section, key, value):
+        global SERVER, GAMEMODE
         if config is not self.config:
             return
         token = (section, key)
         if token == ('section1', 'max_cards'):
             self.max_cards = int(value)
         if token == ('section1', 'gamemode'):
-            self.gamemode = value     
+            GAMEMODE = value
+        if token == ('section1', 'serverip'):
+            SERVER = value
+            self.connect_to_server()
+            #re-connect
+            
 
     def callback_pos(self,instance,value):
         #se la carta viene trascinata nella discard zone allora viene scartata
