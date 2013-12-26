@@ -21,7 +21,7 @@ This is a basic pinnacola cards game, using the scatter widget.
 
 '''
 
-__version__ = '0.6'
+__version__ = '0.7'
 #v 0.0 deck, userinterface
 #v 0.1 simple net messages (Twisted), server only
 #v 0.2 implement screen manager
@@ -29,6 +29,7 @@ __version__ = '0.6'
 #v 0.4 multiple screens
 #v 0.5 cleaning and debugging
 #v 0.6 started client implementation
+#v 0.7 beta playable in two players, no rules check yet.
 
 import kivy
 kivy.require('1.1.2')
@@ -66,15 +67,19 @@ from kivy.lang import Builder
 from kivy.core.audio import SoundLoader
 from kivy.clock import Clock
 
+from functools import partial
+
+import sys
 import random
 import re
+
 
 # set to 1 to get extra debug info
 DEBUG = 1
 
 PLAYERS = 4
 DISCARDY = 250
-GAMEMODE = 'Client'
+GAMEMODE = None
 SERVER = '192.168.1.65'
 PORT = 8123
 CONNECTION = {}
@@ -379,12 +384,13 @@ class Deck():
     points_table = {'1': 15, '2': 5, '3': 5, '4': 5, '5': 5, '6': 5, '7': 10,
     '8': 10, '9': 10, '10': 10, '11': 10, '12': 10, '13': 10, 'j': 30}
 
-    def __init__(self, n_mazzi=1):
+    def __init__(self, app, n_mazzi=1):
         '''initialize the cards deck'''
         self.n_mazzi = n_mazzi
         self.deck = []
         self.ontable = []
         semi = ['q', 'c', 'p', 'f']
+        self.app = app
         
         for volte in range(self.n_mazzi):  # how many decks are used
             for a in semi:
@@ -403,13 +409,8 @@ class Deck():
 
     def pickacard(self):
         '''Get a card randomly from deck'''
-        if GAMEMODE == 'Server':
-            sel = random.choice(self.deck)
-            self.deck.remove(sel)
-        if GAMEMODE == 'Client':
-            sel = ""
-            pass
-            # TODO implement Client side
+        sel = random.choice(self.deck)
+        self.deck.remove(sel)
         return sel
 
     def allcards(self):
@@ -511,8 +512,12 @@ class PinnacolaBackground(Screen):
 
 
 class IntroScreen(Screen):
+    #global GAMEMODE
     ver = __version__
-    info = StringProperty("Waiting for connections...")
+    print "GGGGGGGGGGGGGGGGGGGG", GAMEMODE
+    string = " %s mode:connecting..." % GAMEMODE
+    
+    info = StringProperty(string)
     
     def on_info(self, instance, value):
         pass
@@ -544,15 +549,7 @@ class Player4Screen(Screen):
     pass
 
 
-# Create the screen manager
-sm = ScreenManager()
-sm.add_widget(IntroScreen(name='intro'))
-sm.add_widget(RulesScreen(name='rules'))
-sm.add_widget(SettingsScreen(name='settings'))
-sm.add_widget(PinnacolaBackground(name='pinnacolabackground'))
-sm.add_widget(Player2Screen(name='player2'))
-sm.add_widget(Player3Screen(name='player3'))
-sm.add_widget(Player4Screen(name='player4'))
+#######sc
 
 
 class PinnacolaApp(App):
@@ -581,7 +578,8 @@ class PinnacolaApp(App):
         #load configurations from ini file
         config = self.config
         max_cards = int(config.get('section1', 'max_cards'))
-        GAMEMODE = config.get('section1', 'gamemode')
+        if GAMEMODE is None: 
+            GAMEMODE = config.get('section1', 'gamemode')
         self.playername = config.get('section1', 'name')
         self.gamemode = GAMEMODE
         # card y position and discarded flag
@@ -604,7 +602,7 @@ class PinnacolaApp(App):
         global DECKINSTANCE, PLAYERINSTANCE
         #create instance for current deck (useles if in Client mode, 
         #but consistent, to keep track about pit)
-        DECKINSTANCE = self.currentDeck = Deck(2)  # use 2 decks of 52 cards
+        DECKINSTANCE = self.currentDeck = Deck(self, 2)  # use 2 decks of 52 cards
                 
         #create instance for local player and display cards on hand
         PLAYERINSTANCE = self.player[0] = Player()
@@ -680,10 +678,15 @@ class PinnacolaApp(App):
 #        self.picture.c = 1
 
     def showcard(self, stat=0):
-        """pick a card from deck and show on table"""
-        entry = self.currentDeck.pickacard()
-        if DEBUG: print entry, stat
-        ##self.i += 1
+        """pick a card from local or remote deck and show on table"""
+        if GAMEMODE == "Server":
+            entry = self.currentDeck.pickacard()
+            return self.putonscreen(entry)
+        if GAMEMODE == "Client":
+            self.climsg_pickacard()
+        
+    def putonscreen(self,entry):
+        '''Show the picked card on screen'''
         try:
             # load the image
             picture = Picture(source='atlas://decks/cards/%s' % entry[:-1], scale=0.7,do_rotation=False, x=200 , y=200, card=entry)
@@ -835,8 +838,12 @@ class PinnacolaApp(App):
             #animazione
             anim = Animation(x=300 ,y=50 ,rotation=0,scale=1,t='out_back')
             anim.start(instance)
-            #TODO informa i clients
-            #self.msg_pickedfromtable(card)
+            if GAMEMODE == "Client":
+                #inform server
+                self.climsg_send("PICKPIT "+card)
+            if GAMEMODE == "Server":
+                #inform clients
+                self.srvmsg_send("PICKPIT", card)
 
         if instance <> self.oldinstance:
             self.flag = 0
@@ -968,6 +975,23 @@ class PinnacolaApp(App):
                         except:
                             pass
 
+    def destroy(self,card):
+        root = sm.get_screen('pinnacolabackground')
+        def destro(dt, item):
+           sm.get_screen('pinnacolabackground').remove_widget(item)
+        
+        for child in sm.get_screen('pinnacolabackground').children:
+            if child.card == card:
+                #child.unbind(pos=self.callback_pos)
+                anim = Animation(scale=1,t='out_back')
+                anim.start(child)
+                root.remove_widget(child)
+                #shedule deletion after animation
+                #Clock.schedule_once(partial(destro, child), 2)
+                break
+                
+                
+        
 
 ###############Server side routines#####################################
     def msg_sendontable(self,stat):
@@ -988,25 +1012,35 @@ class PinnacolaApp(App):
         for n in NAMES:
             CONNECTION[n].sendLine(str(header)+" "+str(msg))
 
-    def handle_CHAT(self, message):
+    def handle_CHAT(self, cla, message):
         global DECKINSTANCE
 
-        if DEBUG: print "<%s> %s" % (self.name, message)
+        if DEBUG: print "<%s> %s" % (cla.name, message)
         if message == "PICKDECK":
-            # FIXME works only for 1 client!!
-            CONNECTION[0].sendLine('<DECK>'+str(Deck.pickacard(DECKINSTANCE)))
+            #check wich connection and send only to that
+            CONNECTION[cla.name].sendLine('<DECK>'+str(Deck.pickacard(DECKINSTANCE)))
 
         #for name, protocol in self.users.iteritems():
         #    if protocol != self:
         #        self.sendLine(message)
-        if message == "PICKPIT":
+        if "PICKPIT" in message:
             print "Doing pickpit things..."
+            card = message[8:]
+            self.currentDeck.pick_fromtable(card) #toglie dal pozzo
+            self.numDiscarded -=1
+            self.destroy(card)
+            self.relay_message(cla.name, message) 
         
         if "DISCARDED" in message:
             self.numDiscarded += 1
             card = message[10:]
             DECKINSTANCE.put_ontable(card)
             self.show_pit(card, sm.get_screen('pinnacolabackground'))
+
+    def relay_message(self, sender, msg ):
+        
+        pass
+        # TODO remember to relay the messages to all the other clients!!
 
 ############### Client side routines###################################
     def connect_to_server(self):
@@ -1021,6 +1055,13 @@ class PinnacolaApp(App):
         
     def climsg_sendontable(self, card):
         self.climsg_send("DISCARDED "+card)
+        
+    def climsg_pickpit(self, card):
+        self.climsg_send("PICKPIT "+card)
+
+    def climsg_pickacard(self):
+        '''send a message to server asking a card from deck'''
+        self.climsg_send("PICKDECK")
 
     def climsg_send(self, msg):
         '''In client mode send message to connected Server'''
@@ -1029,30 +1070,44 @@ class PinnacolaApp(App):
         else:
             print'Server not found'
         
+
+        
     def handle_message(self,msg):
-        '''Handle (decode) messages/requests from clients'''
+        '''Handle (decode) messages/requests from clients
+            <xxx> are answers to client questions
+            xxx are spontaneous messages from server'''
         if DEBUG:
             print "Received message from server: %s" % msg
-            print "Lines in message: %s" % len(msg)
         if "Welcome" in msg:
             self.climsg_send(self.playername)
-        if "exceeded" in msg:
+        elif "exceeded" in msg:
             print "not accepted, too many clients"
-        if "taken" in msg:
+        elif "taken" in msg:
             print "not accepted, id exists"
-        if "<INIT>" in msg:
-            print "Getting cards from server "
+        elif "<INIT>" in msg:
+            if DEBUG: print "Getting cards from server "
             cards = msg[6:].split('-')
             self.cards_server = cards[:-1]
-            print self.cards_server
+            #print self.cards_server
             ##now can continue to play after <INIT> is catched
             self.startplay(sm.get_screen('pinnacolabackground'))
-        if "DISCARDED" in msg:
+        elif "DISCARDED" in msg:
             self.numDiscarded += 1
             card = msg[10:-2]
             DECKINSTANCE.put_ontable(card)
             self.show_pit(card, sm.get_screen('pinnacolabackground'))
+        elif "<DECK>" in msg:
+            card = msg[6:-2]
+            self.putonscreen(card)
+        elif "PICKPIT" in msg:
+            self.numDiscarded -=1
+            card = msg[8:-2]
+            self.currentDeck.pick_fromtable(card)
+            self.destroy(card)
+    
+
             
+
     def status(self):
         '''Print on console local player's data'''
         print "S: selected", self.selcards
@@ -1113,7 +1168,7 @@ class Chat(LineReceiver):
             self.handle_GETNAME(line)
         else:
             #self.handle_CHAT(line) #old implementation inside class Chat 
-            self.app.handle_CHAT(line) # linked to outside function
+            self.app.handle_CHAT(self, line) # linked to outside function
             #response = self.factory.app.handle_message(data)
             #if response:
             #    self.sendLine(response)
@@ -1149,7 +1204,7 @@ class Chat(LineReceiver):
         #self.sendLine("DISCARDED"+ str(DECKINSTANCE.pit()[0]))
 
 
-    def handle_CHAT(self, message):###not used anymore!!###
+    def handle_CHAT(self, message):###not used here anymore!!, moved under app###
         global DECKINSTANCE
 
         if DEBUG: print "<%s> %s" % (self.name, message)
@@ -1162,6 +1217,7 @@ class Chat(LineReceiver):
                 self.sendLine(message)
         if message == "PICKPIT":
             print "Doing pickpit things..."
+            
         
         if "DISCARDED" in message:
             self.numDiscarded += 1
@@ -1199,7 +1255,28 @@ class EchoFactory(protocol.ClientFactory):
 
     def clientConnectionFailed(self, conn, reason):
         self.app.handle_message("connection failed")
+        sm.get_screen('intro').info = "Server not found!!" 
 
 
 if __name__ == '__main__':
+    #Parsing line flags
+    # (to pass arguments to app use python main.py -- -C
+    # inline flag overrides ini file)
+    arguments = sys.argv
+    if "-C" in arguments:
+        GAMEMODE = "Client"
+    elif "-S" in arguments:
+        GAMEMODE = "Server"
+    # Create the screen manager
+    sm = ScreenManager()
+    sm.add_widget(IntroScreen(name='intro'))
+    sm.add_widget(RulesScreen(name='rules'))
+    sm.add_widget(SettingsScreen(name='settings'))
+    sm.add_widget(PinnacolaBackground(name='pinnacolabackground'))
+    sm.add_widget(Player2Screen(name='player2'))
+    sm.add_widget(Player3Screen(name='player3'))
+    sm.add_widget(Player4Screen(name='player4'))
+    # put some info about gamemode on intro screen
+    sm.get_screen('intro').info = " %s mode: connecting" %GAMEMODE
+    #run application
     PinnacolaApp().run()
