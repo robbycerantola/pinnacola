@@ -1,6 +1,6 @@
 git clone git://git.code.sf.net/p/pinnacola/code pinnacola-code
 
-Pinnacola 0.7  2013(c) by Robby Cerantola 
+Pinnacola 0.7  2013(c) by Robby Cerantola                     27/12/2013
 
 Features:
   * Pinnacola cards game.
@@ -32,8 +32,14 @@ Usage
 0) Install the dependencies listed above.
 
 2) On Linux run python ./main.py
-    It can be started from console in server mode by python ./main.py -- -S ( note space between -- and -S to 
-    override kivy arguments handling) or in console mode by python ./main.py -- -C
+    It can be started from console in server mode by 
+    
+        python ./main.py -- -S 
+        
+    ( note space between -- and -S to override kivy arguments handling)
+    or in console mode by 
+    
+        python ./main.py -- -C
     
 3) On Windows (yet to be tested)
 
@@ -60,14 +66,16 @@ Rules, see: http://it.wikipedia.org/wiki/Pinnacola
 (translator wanted.....)
 
 The Pinnacola is played with 2 decks of 52 cards, in opposite pairs. 
-The dealer (Server) distributes 13 or 15 cards each, the rest of the deck is placed at 
-the center of the table and the first card turned out.
-Each player in turn must draw a card from the deck or from the well, insert it between
-those in his hand, possibly dropping one or more combinations and then discard a card.
-While moving the cards, they are selected (frames turn red) and then ca be dropped or deselected by 
-pushing the appropriate button in the upper part of the screen.
-By moving a card towards the discard zone, 
-it will be discarded while moving it outside the well, it will be picked up.  
+The dealer (Server) distributes 13 or 15 cards each, the rest of the deck 
+is placed at the center of the table and the first card turned out.
+Each player in turn must draw a card from the deck or from the well, insert 
+it between those in his hand, possibly dropping one or more combinations
+and then discard a card.
+While moving the cards, they are selected (frames turn red) and then can 
+be dropped or deselected by pushing the appropriate button in the upper 
+part of the screen.
+By moving a card towards the discard zone, it will be discarded while
+moving it outside the well, it will be picked up.  
 
 
 
@@ -95,9 +103,10 @@ Playing against virtual players.
 Thanks
 ------
 
-to Intro loop music from PlayOnLoop.com
+to PlayOnLoop.com for the Intro loop music; 
 
-to my grandparents who teached me this game when I was a child.
+to my grandparents Mario and Anna, who teached me this game when 
+I was a child.
 
 
 
