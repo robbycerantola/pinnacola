@@ -413,8 +413,11 @@ class Deck():
 
     def pickacard(self):
         '''Get a card randomly from deck'''
-        sel = random.choice(self.deck)
-        self.deck.remove(sel)
+        if len(self.deck) >0 :
+            sel = random.choice(self.deck)
+            self.deck.remove(sel)
+        else:
+            sel= ""
         return sel
 
     def allcards(self):
@@ -616,6 +619,8 @@ class PinnacolaApp(App):
         #create instance for local player and display cards on hand
         PLAYERINSTANCE['Local'] = self.player[0] = Player(self.playername)
 
+        #PLAYERINSTANCE['Remote'] = self.player[1] = Player('Remote')
+        
         #disposition of cards on start screen
         cy = [50, 53, 55, 60, 70, 75, 80, 85, 80, 75, 70, 60, 55, 53, 50]
         cx = 0
@@ -668,7 +673,10 @@ class PinnacolaApp(App):
         sm.get_screen('pinnacolabackground').info=""
         if GAMEMODE == "Server":
             entry = self.currentDeck.pickacard()
-            self.player[0].addcard(entry)
+            if entry <>"":
+                self.player[0].addcard(entry)
+            else:
+                sm.get_screen('pinnacolabackground').info = "No more cards on Deck"
             if DEBUG: print 'Player 0 hand:',self.player[0].hand
             return self.putonscreen(entry)
         if GAMEMODE == "Client":
@@ -1015,7 +1023,7 @@ class PinnacolaApp(App):
         line = ""
         for card in cards:
             line += str(card)+"-"
-        line = line +str(self.player[0].left)+self.playername
+        line = line +str(self.player[0].left)+"-"+self.playername
         self.srvmsg_send("DROPPED ", line)
 
     def srvmsg_send(self, header, msg):
@@ -1099,6 +1107,7 @@ class PinnacolaApp(App):
         '''Handle (decode) messages/requests from clients
             <xxx> are answers to client questions
             xxx are spontaneous messages from server'''
+        global PLAYERINSTANCE
         if DEBUG: print "Received message from server: %s" % msg
         if "Welcome" in msg:
             self.climsg_send(self.playername)
@@ -1122,26 +1131,34 @@ class PinnacolaApp(App):
             self.show_pit(card, sm.get_screen('pinnacolabackground'))
         elif "<DECK>" in msg:
             card = msg[6:-2]
-            self.player[0].addcard(card)
-            self.putonscreen(card)
+            if card <>"":
+                self.player[0].addcard(card)
+                self.putonscreen(card)
+            else:
+                sm.get_screen('pinnacolabackground').info = "No more cards."
         elif "PICKPIT" in msg:
             self.numDiscarded -=1
             card = msg[8:-2]
             self.currentDeck.pick_fromtable(card)
             self.destroy(card)
         elif "DROPPED" in msg:
-            cards = message[8:].split('-')
-            name = cards[-1]
+            campi= msg[9:].split('-')
+            inhand = campi[-2]
+            cards = campi[:-2]
+            name = campi[-1].rstrip()
             i=0
-            print cards, name
-            PLAYERINSTANCE[name].putdown(cards[:-2])
-            PLAYERINSTANCE[name]._nr = int(cards[-2])
-            for card in cards[:-1]:
-                i +=1
-                putonscreen(card,PLAYERINSTANCE[name].screen,100,100,10,200-(10*i))
+            print "<"+name+">","DROPPED",cards,"left in hand",inhand
+            # create a new player instance if it does not exist and populate with data
+            if not(PLAYERINSTANCE.has_key(name)):
+                PLAYERINSTANCE[name]=Player(name)
                 
-
-            
+            if DEBUG:print PLAYERINSTANCE[name].screen #print the name of the assigned screen
+            PLAYERINSTANCE[name].putdown(cards)
+            PLAYERINSTANCE[name]._nr = int(inhand)
+                #PLAYERINSTANCE[name].name=name
+            for card in cards:
+                i +=1
+                self.putonscreen(card,PLAYERINSTANCE[name].screen,100,100,10,200-(10*i))            
 
     def status(self):
         '''Print on console local players' data'''

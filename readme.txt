@@ -4,7 +4,7 @@ Pinnacola 0.7  2013(c) by Robby Cerantola                     27/12/2013
 
 Features:
   * Pinnacola cards game.
-  * Multiuser.
+  * Multiplayer.
   * Multiplatform: runs on Linux, Windows, Mac OS, Android 
     
 
@@ -14,7 +14,7 @@ Dependencies
 
   
   * Python 2.7
-  * Kivy 1.1.2
+  * Kivy 1.1.2 or later
   * Twisted 
   
 
@@ -29,7 +29,7 @@ Optionally
 Usage
 -----
 
-0) Install the dependencies listed above.
+1) Install the dependencies listed above.
 
 2) On Linux run python ./main.py
     It can be started from console in server mode by 
@@ -40,6 +40,8 @@ Usage
     or in console mode by 
     
         python ./main.py -- -C
+        
+    Open port 8123 for multiplayer !
     
 3) On Windows (yet to be tested)
 
@@ -84,7 +86,7 @@ Known Issues
 ------------
 
 Work in progress
-Simple game functionality, multiuser (two players only for now).
+Simple game functionality, multiuser (two players only for now, no pairs).
 No rules checking yet.
 Graphic interface incomplete.
 Lot of debug informations
@@ -94,7 +96,7 @@ Lot of debug informations
 Future development
 ------------------
 
-Playin in pairs.
+Playing in pairs.
 Turnament.
 Playing against virtual players.
 
