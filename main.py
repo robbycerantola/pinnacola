@@ -1,10 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 '''
-Pinnacola        Copyright (c) 2013  by Robby Cerantola
+Pinnacola        Copyright (c) 2014  by Robby Cerantola
 =======================================
 
-This is a basic pinnacola cards game, using the scatter widget.
+This is a basic pinnacola cards game, using kivy and the scatter widget.
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ This is a basic pinnacola cards game, using the scatter widget.
 
 '''
 
-__version__ = '0.7b'
+__version__ = '0.8'
 #v 0.0 deck, userinterface
 #v 0.1 simple net messages (Twisted), server only
 #v 0.2 implement screen manager
@@ -29,8 +29,9 @@ __version__ = '0.7b'
 #v 0.4 multiple screens
 #v 0.5 cleaning and debugging
 #v 0.6 started client implementation
-#v 0.7 beta playable in two players, no rules check yet.
+#v 0.7 beta playable in two players, no rules check yet (bugged!!)
 #v 0.7b server ip selectable in settings
+#v 0.8 multiplayer, no rules check yet 
 
 import kivy
 kivy.require('1.1.2')
@@ -192,29 +193,57 @@ Builder.load_string("""
         Rectangle:
             source: 'CardTable.png'
             size: self.size
+
+    BoxLayout:
+        padding: 10
+        spacing: 10
+        size_hint: 1, None
+        pos_hint: {'top': 1}
+        height: 44
+        Image:
+            size_hint: None, None
+            size: 24, 24
+            source: 'data/logo/kivy-icon-24.png'
+        Label:
+            height: 24
+            #text_size: self.size
+            color: (.5, .5, .5, .8)
+            text: 'Pinnacola %s ' % root.ver
+            valign: 'bottom'
+        Label:
+            text: 'Points: %s' %root.points
+            
+
+
     FloatLayout:
         Label:
             text: 'Player 2 name'
         
         Button:
-            background_color: (1,1,1,.5)
-            text: 'Back'
-            pos: 1,20
-            size_hint: .2,.2
-            on_press:root.manager.current = 'pinnacolabackground'
+            background_normal: 'decks/backcards.png'
+            text: 'Me'
+            pos_hint: {'x': .0,'y': .5}
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'pinnacolabackground'
 
         Button:
-            background_color: (1,1,1,.5)
+            background_normal: 'decks/backcards.png'
             text: 'Player 3'
-            pos: 1,200
-            size_hint: .2,.2
-            on_press:root.manager.current = 'player3'
+            pos_hint: {'x': .4,'y': .7}
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player3'
         Button:
-            background_color: (1,1,1,.5)
+            background_normal: 'decks/backcards.png'
             text: 'Player 4'
-            pos: 200,20
-            size_hint: .2,.2
-            on_press:root.manager.current = 'player4'
+            pos_hint: {'x': .8,'y': .5}
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player4'
 
 <Player3Screen>
     canvas:
@@ -223,29 +252,57 @@ Builder.load_string("""
         Rectangle:
             source: 'CardTable.png'
             size: self.size
+
+    BoxLayout:
+        padding: 10
+        spacing: 10
+        size_hint: 1, None
+        pos_hint: {'top': 1}
+        height: 44
+        Image:
+            size_hint: None, None
+            size: 24, 24
+            source: 'data/logo/kivy-icon-24.png'
+        Label:
+            height: 24
+            #text_size: self.size
+            color: (.5, .5, .5, .8)
+            text: 'Pinnacola %s ' % root.ver
+            valign: 'bottom'
+        Label:
+            text: 'Points: %s' %root.points
+
     FloatLayout:
         Label:
             text: 'Player 3 name'
         
         Button:
-            background_color: (1,1,1,.5)
+            #background_color: (1,1,1,.5)
+            background_normal: 'decks/backcards.png'
             text: 'Back'
-            pos: 1,20
-            size_hint: .2,.2
-            on_press:root.manager.current = 'pinnacolabackground'
+            pos_hint: {'x': .4,'y': .7}
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'pinnacolabackground'
 
         Button:
-            background_color: (1,1,1,.5)
+            background_normal: 'decks/backcards.png'
             text: 'Player 2'
-            pos: 200,20
-            size_hint: .2,.2
-            on_press:root.manager.current = 'player2'
+            pos_hint: {'x': .0,'y': .5}
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player2'
         Button:
-            background_color: (1,1,1,.5)
+            #background_color: (1,1,1,.5)
+            background_normal: 'decks/backcards.png'
             text: 'Player 4'
-            pos: 100,100
-            size_hint: .2,.2
-            on_press:root.manager.current = 'player4'
+            pos_hint: {'x': .8,'y': .5}
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player4'
 
 <Player4Screen>
     canvas:
@@ -254,29 +311,57 @@ Builder.load_string("""
         Rectangle:
             source: 'CardTable.png'
             size: self.size
+
+    BoxLayout:
+        padding: 10
+        spacing: 10
+        size_hint: 1, None
+        pos_hint: {'top': 1}
+        height: 44
+        Image:
+            size_hint: None, None
+            size: 24, 24
+            source: 'data/logo/kivy-icon-24.png'
+        Label:
+            height: 24
+            #text_size: self.size
+            color: (.5, .5, .5, .8)
+            text: 'Pinnacola %s ' % root.ver
+            valign: 'bottom'
+        Label:
+            text: 'Points: %s' %root.points
+
     FloatLayout:
         Label:
             text: 'Player 4 name'
         
         Button:
-            background_color: (1,1,1,.5)
-            text: 'Back'
-            pos: 1,20
-            size_hint: .2,.2
-            on_press:root.manager.current = 'pinnacolabackground'
+            #background_color: (1,1,1,.5)
+            background_normal: 'decks/backcards.png'
+            text: 'Me'
+            pos_hint: {'x': .8,'y': .5}
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'pinnacolabackground'
 
         Button:
-            background_color: (1,1,1,.5)
+            #background_color: (1,1,1,.5)
+            background_normal: 'decks/backcards.png'
             text: 'Player 2'
-            pos: 1,20
-            size_hint: .2,.2
-            on_press:root.manager.current = 'player2'
+            pos_hint: {'x': .0,'y': .5}
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player2'
         Button:
-            background_color: (1,1,1,.5)
+            background_normal: 'decks/backcards.png'
             text: 'Player 3'
-            pos: 50,20
-            size_hint: .2,.2
-            on_press:root.manager.current = 'player3'
+            pos_hint: {'x': .4,'y': .7}
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player3'
 
 <PinnacolaBackground>:
     canvas:
@@ -351,7 +436,7 @@ Builder.load_string("""
             size_hint: None, None
             height: dp(80)
             width: dp(100)
-            on_press:root.manager.transition = SlideTransition(direction="right");root.manager.current = 'player4'
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player4'
         Button:
             #background_color: (1,1,1,.5)
             background_normal: 'decks/backcards.png'
@@ -362,7 +447,7 @@ Builder.load_string("""
             size_hint: None, None
             height: dp(80)
             width: dp(100)
-            on_press:root.manager.transition = SlideTransition(direction="left");root.manager.current = 'player2'
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player2'
         Button:
             #background_color: (1,1,1,.5)
             background_normal: 'decks/backcards.png'
@@ -372,7 +457,7 @@ Builder.load_string("""
             size_hint: None, None
             height: dp(80)
             width: dp(100)
-            on_press:root.manager.transition = SlideTransition(direction="up");root.manager.current = 'player3'
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player3'
         
 """)
 
@@ -380,7 +465,7 @@ Builder.load_string("""
 class Deck():
     '''Create cards' deck in memory using the following convention:
         1 to 13 number of card, and f for flower p for  q for  and
-         c for harts 0-1.. number of deck.
+         c for hearts 0-1.. number of deck.
         Manage the metods to use the deck
     '''
     #assign to every card some points
@@ -437,7 +522,7 @@ class Deck():
         try:
             self.ontable.remove(card)
         except:
-            print 'Some error, card you wish to remove is not on table'
+            print 'Some error, the card you wish to remove is not on table!'
 
     def value(self,card):
         return card[:-1]
@@ -452,6 +537,7 @@ class Player():
     counter = 0
     def __init__(self,name):
         screennames = ['pinnacolabackground','player2','player3','player4']
+        self.positions=[10,60,110,160,210,260,310]
         self.hand = []
         self.down = []
         self.points = 0
@@ -460,6 +546,7 @@ class Player():
         #asign a screen to each player
         self.screen = screennames[Player.counter]
         Player.counter += 1
+        self.pos=1  #posizione delle carte calate
 
     def addcard(self, card):
         self.hand.append(card)
@@ -468,7 +555,7 @@ class Player():
         try:
             self.hand.remove(card)
         except:
-            print 'Some error, card you wish to remove is not in player\
+            print 'Some error, the card you wish to remove is not in player\
                     hand, not removing again.'
 
     def playcard(self, card):
@@ -498,7 +585,7 @@ class Player():
 class Picture(Scatter):
     '''Picture is the class that will show the cards with a white border and a
     shadow. There are nothing here because almost everything is inside the
-    pinnacola. kv. Check the rule named <Picture> inside the file, and you'll
+    inline kv statements. Check the rule named <Picture> , and you'll
     see how the Picture() is really constructed and used.
     The source property will be the filename to show.
     '''
@@ -549,15 +636,19 @@ class SettingsScreen(Screen):
 
 
 class Player2Screen(Screen):
-    pass
+    ver = __version__
+    points = NumericProperty(0)
 
 
 class Player3Screen(Screen):
-    pass
+    ver = __version__
+    points = NumericProperty(0)
 
 
 class Player4Screen(Screen):
-    pass
+    ver = __version__
+    points = NumericProperty(0)
+
 
 
 #######sc
@@ -980,9 +1071,9 @@ class PinnacolaApp(App):
     def on_selected(self, *args):
         print 'selected', args
 
-    def animation(self,i):
+    def animation(self,i,screen='pinnacolabackground'):
         '''create animation for every card going on table'''
-        for child in sm.get_screen('pinnacolabackground').children:
+        for child in sm.get_screen(screen).children:
                         try:
                             if child.card == i:
                                 # unbind callback_pos to avoid selection
@@ -1035,6 +1126,9 @@ class PinnacolaApp(App):
     def handle_CHAT(self, cla, message):
 
         if DEBUG: print "<%s> %s" % (cla.name, message)
+        
+        self.relay_message(cla.name, message) #relay messages to other players
+        
         if message == "PICKDECK":
             CONNECTION[cla.name].sendLine('<DECK>'+str(self.currentDeck.pickacard()))
 
@@ -1044,7 +1138,7 @@ class PinnacolaApp(App):
             self.currentDeck.pick_fromtable(card) #toglie dal pozzo
             self.numDiscarded -=1
             self.destroy(card)
-            self.relay_message(cla.name, message) 
+            #self.relay_message(cla.name, message) 
         
         if "DISCARDED" in message:
             self.numDiscarded += 1
@@ -1055,11 +1149,16 @@ class PinnacolaApp(App):
         if "DROPPED" in message:
             #receive cards dropped and nr cards left in hand
             cards = message[8:].split('-')
-            print cards
-            PLAYERINSTANCE[cla.name].putdown(cards[:-1])
-            PLAYERINSTANCE[cla.name]._nr = int(cards[-1])
-            self.relay_message(cla.name, message+str(cla.name))
-            # TODO show in player's screen
+            self.syncplayer(cla.name,cards[:-1],int(cards[-1]))
+            #if DEBUG:print cards
+            #PLAYERINSTANCE[cla.name].putdown(cards[:-1])
+            #PLAYERINSTANCE[cla.name]._nr = int(cards[-1])
+            #self.relay_message(cla.name, message+str(cla.name))
+            ## shows cards in player's screen
+            #i=0
+            #for card in cards:
+            #    i +=1
+            #    self.putonscreen(card,PLAYERINSTANCE[cla.name].screen,100,80,10,200-(20*i))
 
     def relay_message(self, sender, msg):
         '''broadcast mesages to all clients but the original sender'''
@@ -1151,15 +1250,33 @@ class PinnacolaApp(App):
             # create a new player instance if it does not exist and populate with data
             if not(PLAYERINSTANCE.has_key(name)):
                 PLAYERINSTANCE[name]=Player(name)
-                
-            if DEBUG:print PLAYERINSTANCE[name].screen #print the name of the assigned screen
-            PLAYERINSTANCE[name].putdown(cards)
-            PLAYERINSTANCE[name]._nr = int(inhand)
+            
+            self.syncplayer(name,cards,inhand)    
+            #if DEBUG:print PLAYERINSTANCE[name].screen #print the name of the assigned screen
+            #PLAYERINSTANCE[name].putdown(cards)
+            #PLAYERINSTANCE[name]._nr = int(inhand)
                 #PLAYERINSTANCE[name].name=name
-            for card in cards:
-                i +=1
-                self.putonscreen(card,PLAYERINSTANCE[name].screen,100,100,10,200-(10*i))            
+            #for card in cards:
+            #    i +=1
+            #    self.putonscreen(card,PLAYERINSTANCE[name].screen,100,100,10,200-(20*i))            
 
+    def syncplayer(self,name,cards,inhand):
+        '''syncronize players screens'''
+        global PLAYERINSTANCE
+        if DEBUG:print PLAYERINSTANCE[name].screen #print the name of the assigned screen
+        PLAYERINSTANCE[name].putdown(cards)
+        PLAYERINSTANCE[name]._nr = int(inhand)
+        i=0
+        x= PLAYERINSTANCE[name].positions[PLAYERINSTANCE[name].pos]
+        PLAYERINSTANCE[name].pos +=1
+        if DEBUG:print "X:",x
+        for card in cards:
+            i +=1
+            self.putonscreen(card,PLAYERINSTANCE[name].screen,100,100,x,180-(20*i))
+            self.animation(card,PLAYERINSTANCE[name].screen)
+              
+        
+    
     def status(self):
         '''Print on console local players' data'''
         print "Local player"
@@ -1228,8 +1345,10 @@ class Chat(LineReceiver):
         
         def delayed(dt,instance=self):
             instance.sendLine("DISCARDED "+ str(DECKINSTANCE.pit()[0]))
+        print self.users
         
-        if self.users.has_key(name):
+        
+        if name in self.users:
             self.sendLine("ID taken, please choose another.")
             return
         if len(NAMES) == 3:

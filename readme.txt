@@ -1,6 +1,6 @@
 git clone git://git.code.sf.net/p/pinnacola/code pinnacola-code
 
-Pinnacola 0.7  2013(c) by Robby Cerantola                     27/12/2013
+Pinnacola 0.8  2014(c) by Robby Cerantola                   10/11/2014
 
 Features:
   * Pinnacola cards game.
