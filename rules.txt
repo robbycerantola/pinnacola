@@ -1,3 +1,13 @@
+How to start playing
+
+Pinnacola is a multi user card game.
+Minimum 2 players with their own terminals are needed, maximum 4.
+First only one terminal has to be started as Server by changing the mode in 'settings' if needed.
+Then the other terminals have to start as Clients in succession .
+In 'settings' every client has to set a unique user name and the Server ip address to connect to.
+For now to change mode from Client to Server and viceversa the program has to be closed and restarted.
+
+
 Regolamento Pinnacola
  
 La pinnacola si gioca con 2 mazzi di 52 carte francesi, a coppie contrapposte. Il cartaio distribuisce 13 carte coperte per ciascuno, il resto del mazzo si mette al centro e si scopre la prima carta. 

@@ -1,12 +1,22 @@
 git clone git://git.code.sf.net/p/pinnacola/code pinnacola-code
 
-Pinnacola 0.8  2014(c) by Robby Cerantola                   10/11/2014
+Pinnacola 0.8.1  2014(c) by Robby Cerantola                   12/11/2014
 
-Features:
+Features
+--------
   * Pinnacola cards game.
   * Multiplayer.
   * Multiplatform: runs on Linux, Windows, Mac OS, Android 
     
+
+
+In brief
+--------
+
+Pinnacola is a multi user game, minimum 2 players needed, maximum 4.
+First one terminal has to be started as Server by changing the mode in 'settings'.
+Then the other terminals have to start as Clients in succession .
+In 'settings' every client has to set a unique user name and the Server ip address to connect to.
 
 
 Dependencies
@@ -57,7 +67,7 @@ Usage
 
 It is a multi user game, minimum 2 players needed, maximum 4.
 One terminal has to be started as Server and the other as clients .
-In settings you have to set your user name and the server ip address to connect to.
+In 'settings' you have to set your user name and the server ip address to connect to.
 
 
 
@@ -86,7 +96,7 @@ Known Issues
 ------------
 
 Work in progress
-Simple game functionality, multiuser (two players only for now, no pairs).
+Simple game functionality, multiuser .
 No rules checking yet.
 Graphic interface incomplete.
 Lot of debug informations

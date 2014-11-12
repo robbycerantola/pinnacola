@@ -21,7 +21,7 @@ This is a basic pinnacola cards game, using kivy and the scatter widget.
 
 '''
 
-__version__ = '0.8'
+__version__ = '0.8.1'
 #v 0.0 deck, userinterface
 #v 0.1 simple net messages (Twisted), server only
 #v 0.2 implement screen manager
@@ -32,6 +32,7 @@ __version__ = '0.8'
 #v 0.7 beta playable in two players, no rules check yet (bugged!!)
 #v 0.7b server ip selectable in settings
 #v 0.8 multiplayer, no rules check yet 
+#v 0.8.1 cleanup
 
 import kivy
 kivy.require('1.1.2')
@@ -152,9 +153,15 @@ Builder.load_string("""
             text: 'Rules of game'
             on_press:root.manager.transition = FadeTransition(); root.manager.current = 'rules'
     BoxLayout:
+        #pos_hint: {'top': 1}
+        
         Label:
             color: (0,0,0,1)
-            text: 'Pinnacola v %s (c) 2013 by Robby Cerantola' % root.ver
+            
+            text: 'Pinnacola v %s (c) 2014 \\n by Robby Cerantola' % root.ver
+    
+ 
+            
         Label:
             color: (0,0,0,1)
             text: root.info
@@ -171,12 +178,20 @@ Builder.load_string("""
                 color: (0,0,0,1)
                 background_color: (1,1,1,.6)
                 text: root.rulestxt
+    BoxLayout:
+        orientation: "horizontal"
         Button:
             size_hint: 1, 0.1
             pos_hint: { 0.5: "center_x" }
             background_color: (1,1,1,.5)
             text: 'Play game'
             on_press: root.manager.current = 'pinnacolabackground'; app.sound.stop()
+        
+        Button:
+            size_hint: 1, 0.1
+            background_color: (1,1,1,.5)
+            text: 'Goto settings'
+            on_press: app.open_settings(self)
 
 <SettingsScreen>:
     BoxLayout:
@@ -217,8 +232,7 @@ Builder.load_string("""
 
     FloatLayout:
         Label:
-            text: 'Player 2 name'
-        
+            text: 'Player %s' %root.gamer
         Button:
             background_normal: 'decks/backcards.png'
             text: 'Me'
@@ -274,7 +288,7 @@ Builder.load_string("""
 
     FloatLayout:
         Label:
-            text: 'Player 3 name'
+            text: 'Player %s' %root.gamer
         
         Button:
             #background_color: (1,1,1,.5)
@@ -333,7 +347,7 @@ Builder.load_string("""
 
     FloatLayout:
         Label:
-            text: 'Player 4 name'
+            text: 'Player %s' %root.gamer
         
         Button:
             #background_color: (1,1,1,.5)
@@ -428,9 +442,10 @@ Builder.load_string("""
         
     FloatLayout:
         Button:
+            #4
             #background_color: (1,1,1,1)
             background_normal: 'decks/backcards.png'
-            text: '4'
+            text: '%s' %root.gamer4
             pos_hint: {'x': .8,'y': .5}
             #size_hint: .2,.2
             size_hint: None, None
@@ -438,9 +453,10 @@ Builder.load_string("""
             width: dp(100)
             on_press:root.manager.transition = FadeTransition();root.manager.current = 'player4'
         Button:
+            #2
             #background_color: (1,1,1,.5)
             background_normal: 'decks/backcards.png'
-            text: '2'
+            text: '%s' %root.gamer2
             pos_hint: {'x': .0,'y':.5}
             #pos_hint: {'center_y':1}
             #size_hint: .2,.2
@@ -449,9 +465,10 @@ Builder.load_string("""
             width: dp(100)
             on_press:root.manager.transition = FadeTransition();root.manager.current = 'player2'
         Button:
+            #3
             #background_color: (1,1,1,.5)
             background_normal: 'decks/backcards.png'
-            text: '3'
+            text: '%s' %root.gamer3
             pos_hint: {'x': .4,'y':.7}
             #size_hint: .2,.2
             size_hint: None, None
@@ -546,7 +563,13 @@ class Player():
         #asign a screen to each player
         self.screen = screennames[Player.counter]
         Player.counter += 1
-        self.pos=1  #posizione delle carte calate
+        self.pos=1  #successiva posizione libera per calare le carte
+        
+        #scr = sm.get_screen(self.screen) # refresh name on player screen
+        #scr.gamer=name
+        
+        #scr = sm.get_screen(screennames[0])  # refresh name on local screen
+        #scr.gamer[Player.counter+1]=name
 
     def addcard(self, card):
         self.hand.append(card)
@@ -603,18 +626,23 @@ class Picture(Scatter):
 
 #declare screens
 class PinnacolaBackground(Screen):
+    
     ver = __version__
     points = NumericProperty(0)
     info = StringProperty("Welcome!")
+    gamer2 = StringProperty('2')
+    gamer3 = StringProperty('3')
+    gamer4 = StringProperty('4')
 
     def __init__(self, **kwargs):
         super(PinnacolaBackground, self).__init__(**kwargs)
-
+        
+                
 
 class IntroScreen(Screen):
-    #global GAMEMODE
+    
     ver = __version__
-    string = " %s mode:connecting..." % GAMEMODE
+    string = "Pinnacola %s" % ver
     info = StringProperty(string)
 
     def on_info(self, instance, value):
@@ -638,17 +666,18 @@ class SettingsScreen(Screen):
 class Player2Screen(Screen):
     ver = __version__
     points = NumericProperty(0)
-
+    gamer = StringProperty("2")
+    
 
 class Player3Screen(Screen):
     ver = __version__
     points = NumericProperty(0)
-
+    gamer = StringProperty("3")
 
 class Player4Screen(Screen):
     ver = __version__
     points = NumericProperty(0)
-
+    gamer = StringProperty("4")
 
 
 #######sc
@@ -665,10 +694,10 @@ class PinnacolaApp(App):
     cards_server = []
     # cards currently selected
     selcards = []
-    sound = SoundLoader.load('./music/intro.wav')
-    if sound:
-        sound.loop = True
-        sound.play()
+    #sound = SoundLoader.load('./music/intro.wav')
+    #if sound:
+    #    sound.loop = True
+    #    sound.play()
 
     def on_pause(self):
         return True
@@ -683,12 +712,21 @@ class PinnacolaApp(App):
         max_cards = int(config.get('section1', 'max_cards'))
         if GAMEMODE is None: 
             GAMEMODE = config.get('section1', 'gamemode')
+            sm.get_screen('intro').info = "%s mode, waiting for connections.." %(GAMEMODE,)
         self.playername = config.get('section1', 'name')
         SERVER = config.get('section1', 'serverip')
         # card y position and discarded flag
         self.numDiscarded = self.oldvalue = self.flag = 0
         self.oldinstance = None
+        
+        intromusic = int( config.get('section1', 'intromusic'))
 
+        self.sound = SoundLoader.load('./music/intro.wav')
+        if self.sound and intromusic:
+            self.sound.loop = True
+            self.sound.play()
+        
+        
         if GAMEMODE == "Server":
             # start server
             reactor.listenTCP(PORT, ChatFactory(self))
@@ -856,6 +894,7 @@ class PinnacolaApp(App):
         config.set('section1','gamemode','Server')
         config.set('section1','name','')
         config.set('section1','serverip','')
+        config.set('section1','intromusic','1')
 
     def build_settings(self, settings):
         """create configuration pannel"""
@@ -888,8 +927,15 @@ class PinnacolaApp(App):
                 "title": "Server ip",
                 "desc": "When playing as a client, this is the server ip address to connect to.",
                 "section": "section1",
-                "key": "serverip"}
+                "key": "serverip"},
+                
+                {"type": "bool",
+                "title": "Intro music",
+                "desc": "Play music in intro screen.",
+                "section": "section1",
+                "key": "intromusic"}
                    ]"""
+                   
         settings.add_json_panel('Pinnacola',self.config, data=jsondata)
 
     def on_config_change(self, config, section, key, value):
@@ -905,6 +951,13 @@ class PinnacolaApp(App):
             SERVER = value
             self.connect_to_server()
             #re-connect
+        if token == ('section1','intromusic'):
+            if value == "0":
+                self.sound.stop()
+            if value == "1":
+                self.sound.loop = True
+                self.sound.play()
+            
             
 
     def callback_pos(self,instance,value):
@@ -1150,15 +1203,7 @@ class PinnacolaApp(App):
             #receive cards dropped and nr cards left in hand
             cards = message[8:].split('-')
             self.syncplayer(cla.name,cards[:-1],int(cards[-1]))
-            #if DEBUG:print cards
-            #PLAYERINSTANCE[cla.name].putdown(cards[:-1])
-            #PLAYERINSTANCE[cla.name]._nr = int(cards[-1])
-            #self.relay_message(cla.name, message+str(cla.name))
-            ## shows cards in player's screen
-            #i=0
-            #for card in cards:
-            #    i +=1
-            #    self.putonscreen(card,PLAYERINSTANCE[cla.name].screen,100,80,10,200-(20*i))
+
 
     def relay_message(self, sender, msg):
         '''broadcast mesages to all clients but the original sender'''
@@ -1212,10 +1257,10 @@ class PinnacolaApp(App):
             self.climsg_send(self.playername)
         elif "exceeded" in msg:
             if DEBUG: print "not accepted, too many clients"
-            sm.get_screen('intro').info = "Too many clients!!" % (name,)
+            sm.get_screen('intro').info = "Too many clients!!" 
         elif "taken" in msg:
             if DEBUG: print "not accepted, id exists"
-            sm.get_screen('intro').info = "Id taken already, change and try again." % (name,)
+            sm.get_screen('intro').info = "Id taken already, change and try again."
         elif "<INIT>" in msg:
             if DEBUG: print "Getting cards from server "
             cards = msg[6:].split('-')
@@ -1252,16 +1297,9 @@ class PinnacolaApp(App):
                 PLAYERINSTANCE[name]=Player(name)
             
             self.syncplayer(name,cards,inhand)    
-            #if DEBUG:print PLAYERINSTANCE[name].screen #print the name of the assigned screen
-            #PLAYERINSTANCE[name].putdown(cards)
-            #PLAYERINSTANCE[name]._nr = int(inhand)
-                #PLAYERINSTANCE[name].name=name
-            #for card in cards:
-            #    i +=1
-            #    self.putonscreen(card,PLAYERINSTANCE[name].screen,100,100,10,200-(20*i))            
 
     def syncplayer(self,name,cards,inhand):
-        '''syncronize players screens'''
+        '''syncronize datas on players screens'''
         global PLAYERINSTANCE
         if DEBUG:print PLAYERINSTANCE[name].screen #print the name of the assigned screen
         PLAYERINSTANCE[name].putdown(cards)
@@ -1274,9 +1312,11 @@ class PinnacolaApp(App):
             i +=1
             self.putonscreen(card,PLAYERINSTANCE[name].screen,100,100,x,180-(20*i))
             self.animation(card,PLAYERINSTANCE[name].screen)
-              
-        
-    
+            PLAYERINSTANCE[name].addpoints(card)
+            
+        scr = sm.get_screen(PLAYERINSTANCE[name].screen)
+        scr.points=PLAYERINSTANCE[name].points
+
     def status(self):
         '''Print on console local players' data'''
         print "Local player"
@@ -1323,8 +1363,12 @@ class Chat(LineReceiver):
         self.sendLine("Welcome to Pinnacola server. Set your id:")
 
     def connectionLost(self, reason):
+        print "Connection lost with %s" %(self.name,)
         if self.users.has_key(self.name):
-            del self.users[self.name]
+            del self.users[self.name]   # delete handle
+            idx=NAMES.index(self.name)  
+            NAMES.remove(self.name)     # delete id name
+            #TODO: if you lost connection you probably wont continue playing....
 
     def pushMessage(self, msg):
         self.sendLine(str(msg))
@@ -1334,7 +1378,6 @@ class Chat(LineReceiver):
             if DEBUG: print"New client request: ", line
             self.handle_GETNAME(line)
         else:
-            #self.handle_CHAT(line) #old implementation inside class Chat 
             self.app.handle_CHAT(self, line) # linked to outside function
             #response = self.factory.app.handle_message(data)
             #if response:
@@ -1345,10 +1388,11 @@ class Chat(LineReceiver):
         
         def delayed(dt,instance=self):
             instance.sendLine("DISCARDED "+ str(DECKINSTANCE.pit()[0]))
-        print self.users
+        
+        if DEBUG:print "Connected users:",self.users
         
         
-        if name in self.users:
+        if name in NAMES:
             self.sendLine("ID taken, please choose another.")
             return
         if len(NAMES) == 3:
@@ -1359,11 +1403,25 @@ class Chat(LineReceiver):
         if DEBUG: print"Client %s accepted" % (name,)
         sm.get_screen('intro').info = "Client %s accepted" % (name,)
         self.name = name
-        self.users[name] = self
+        self.users[name]= self
         self.state = "CHAT"
         CONNECTION[name] = self  # link chat instances to global variable to be used outside
         NAMES.append(name)
         PLAYERINSTANCE[name] = Player(name) # create new player instance 
+        
+        #refresh player screen name
+        sm.get_screen(PLAYERINSTANCE[name].screen).gamer=name 
+                
+        # refresh also name in main screen  ###ugly!!!
+        if len(NAMES) == 1:
+            sm.get_screen('pinnacolabackground').gamer2 = name
+        if len(NAMES) == 2:
+            sm.get_screen('pinnacolabackground').gamer3 = name
+        if len(NAMES) == 3:
+            sm.get_screen('pinnacolabackground').gamer4 = name
+        
+        
+        
         message = ""
         for i in range(max_cards):
             message = message + str(Deck.pickacard(DECKINSTANCE))+ "-"
@@ -1372,27 +1430,6 @@ class Chat(LineReceiver):
         #delay 1 sec
         Clock.schedule_once(delayed,1)
         #self.sendLine("DISCARDED"+ str(DECKINSTANCE.pit()[0]))
-
-
-#    def handle_CHAT(self, message):###not used here anymore!!, moved under app###
-#        global DECKINSTANCE
-
-#        if DEBUG: print "<%s> %s" % (self.name, message)
-#        if message == "PICKDECK":
-
-#            self.sendLine('<DECK>'+str(Deck.pickacard(DECKINSTANCE)))
-
-#        for name, protocol in self.users.iteritems():
-#            if protocol != self:
-#                self.sendLine(message)
-#        if message == "PICKPIT":
-#            print "Doing pickpit things..."
-
-#        if "DISCARDED" in message:
-#            self.numDiscarded += 1
-#            card = message[10:-2]
-#            DECKINSTANCE.put_ontable(card)
-#            self.show_pit(card, sm.get_screen('pinnacolabackground'))
 
 
 class ChatFactory(Factory):
