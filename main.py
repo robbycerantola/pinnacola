@@ -1,10 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+#:PEP8 -W293
+
 '''
 Pinnacola        Copyright (c) 2014  by Robby Cerantola
 =======================================
 
-This is a basic pinnacola cards game, using kivy and the scatter widget.
+This is a basic pinnacola cards game, using kivy ,the scatter widget
+the screenmanager widget and Twisted.
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +24,7 @@ This is a basic pinnacola cards game, using kivy and the scatter widget.
 
 '''
 
-__version__ = '0.8.1'
+__version__ = '0.8.2'
 #v 0.0 deck, userinterface
 #v 0.1 simple net messages (Twisted), server only
 #v 0.2 implement screen manager
@@ -31,8 +34,9 @@ __version__ = '0.8.1'
 #v 0.6 started client implementation
 #v 0.7 beta playable in two players, no rules check yet (bugged!!)
 #v 0.7b server ip selectable in settings
-#v 0.8 multiplayer, no rules check yet 
+#v 0.8 multiplayer, no rules check yet BUGGED!!
 #v 0.8.1 cleanup
+#v 0.8.2 refactoring, 3 players
 
 import kivy
 kivy.require('1.1.2')
@@ -76,23 +80,18 @@ import sys
 import random
 import re
 
-
-# set to 1 to get extra debug info
-DEBUG = 1
+DEBUG = 1                 # set to 1 to get extra debug info
 
 PLAYERS = 4
 DISCARDY = 250
-GAMEMODE = None
+GAMEMODE = None           # can be 'Server' or 'Client'
 SERVER = ''
-PORT = 8123
-CONNECTION = {}
-NAMES = []
+PORT = 8123               #Twisted connection port
+CONNECTION = {}           #Twisted connections instances
+NAMES = []                # NAMES stores only the other players names without the server's name !! 
 DECKINSTANCE = None
-PLAYERINSTANCE = {}
+PLAYERINSTANCE = {}       #Players instances including local one
 SELCARDS = []
-
-
-#:PEP8 -W293
 
 # BUG?!? Cannot put this on external kv file:
 # screen manager seems to work only with inline statements!!
@@ -293,7 +292,7 @@ Builder.load_string("""
         Button:
             #background_color: (1,1,1,.5)
             background_normal: 'decks/backcards.png'
-            text: 'Back'
+            text: 'Me'
             pos_hint: {'x': .4,'y': .7}
             size_hint: None, None
             height: dp(80)
@@ -302,7 +301,7 @@ Builder.load_string("""
 
         Button:
             background_normal: 'decks/backcards.png'
-            text: 'Player 2'
+            text: "Player 2"
             pos_hint: {'x': .0,'y': .5}
             size_hint: None, None
             height: dp(80)
@@ -311,7 +310,7 @@ Builder.load_string("""
         Button:
             #background_color: (1,1,1,.5)
             background_normal: 'decks/backcards.png'
-            text: 'Player 4'
+            text: 'Player 4' 
             pos_hint: {'x': .8,'y': .5}
             size_hint: None, None
             height: dp(80)
@@ -552,25 +551,68 @@ class Deck():
 
 class Player():
     counter = 0
-    def __init__(self,name):
+    def __init__(self,name,place=0):
+        global NAMES
+        if DEBUG:print NAMES, len(NAMES),Player.counter
+                          # refresh also name in main screen  ###very ugly!!!
         screennames = ['pinnacolabackground','player2','player3','player4']
-        self.positions=[10,60,110,160,210,260,310]
+        if GAMEMODE == "Server":
+            if len(NAMES) == 1:
+                sm.get_screen('pinnacolabackground').gamer2 = name
+            if len(NAMES) == 2:
+                sm.get_screen('pinnacolabackground').gamer3 = name
+            if len(NAMES) == 3:
+                sm.get_screen('pinnacolabackground').gamer4 = name
+        
+        if GAMEMODE == "Client" and len(NAMES) == 0:
+            screennames = ['pinnacolabackground','player4','player2','player3']
+            if Player.counter == 1:
+                sm.get_screen('pinnacolabackground').gamer4 = name #ok
+            if Player.counter == 2:
+                sm.get_screen('pinnacolabackground').gamer2 = name #ok
+            if Player.counter == 3:
+                sm.get_screen('pinnacolabackground').gamer3 = name #ok
+        if GAMEMODE == "Client" and len(NAMES) == 1:
+            screennames = ['pinnacolabackground','player3','player4','player2']
+            if Player.counter == 1:
+                screennames = ['pinnacolabackground','player3','player4','player2']
+                sm.get_screen('pinnacolabackground').gamer3 = name
+            if Player.counter == 2:
+                sm.get_screen('pinnacolabackground').gamer4 = name
+            if Player.counter == 3:
+                sm.get_screen('pinnacolabackground').gamer2 = name
+        if GAMEMODE == "Client" and len (NAMES) == 2:
+            screennames = ['pinnacolabackground','player4','player2','player3']
+            if Player.counter == 1:
+                sm.get_screen('pinnacolabackground').gamer4 = name
+            if Player.counter == 2:
+                sm.get_screen('pinnacolabackground').gamer2 = name
+            if Player.counter == 3:
+                sm.get_screen('pinnacolabackground').gamer3 = name
+            
+        self.positions=[10,60,110,160,210,260,310] #posizioni automatiche delle carte calate
         self.hand = []
         self.down = []
         self.points = 0
         self.name = name
         self._nr = None
-        #asign a screen to each player
-        self.screen = screennames[Player.counter]
+        #assign a screen to each player
+        if place == 0:
+            self.screen = screennames[Player.counter]
+        else:
+            self.screen = screennames[place]
+            
         Player.counter += 1
+            
         self.pos=1  #successiva posizione libera per calare le carte
         
-        #scr = sm.get_screen(self.screen) # refresh name on player screen
-        #scr.gamer=name
-        
-        #scr = sm.get_screen(screennames[0])  # refresh name on local screen
-        #scr.gamer[Player.counter+1]=name
+        #assign a name to each player
+        sm.get_screen(self.screen).gamer = name
+        if DEBUG: print" Player class:",name
 
+    def gamername(self,n):
+        return 'none' if len(NAMES) <2 else NAMES[n-1] 
+    
     def addcard(self, card):
         self.hand.append(card)
 
@@ -597,12 +639,14 @@ class Player():
         for card in cards:
             #self.points += int(Deck.points_table[card[:-2]])
             self.addpoints(card)
+            
 
     def down(self):
         return self.down
 
     def addpoints(self,card):
         self.points += int(Deck.points_table[card[:-2]])
+        print "CardPoint",card
 
 
 class Picture(Scatter):
@@ -666,18 +710,13 @@ class SettingsScreen(Screen):
 class Player2Screen(Screen):
     ver = __version__
     points = NumericProperty(0)
-    gamer = StringProperty("2")
-    
+    gamer = StringProperty("not connected")
 
-class Player3Screen(Screen):
-    ver = __version__
-    points = NumericProperty(0)
-    gamer = StringProperty("3")
+class Player3Screen(Player2Screen):
+    pass
 
-class Player4Screen(Screen):
-    ver = __version__
-    points = NumericProperty(0)
-    gamer = StringProperty("4")
+class Player4Screen(Player2Screen):
+    pass
 
 
 #######sc
@@ -686,7 +725,7 @@ class Player4Screen(Screen):
 class PinnacolaApp(App):
     icon='pinnaicon.png'  #define icon
     #title='Titolo' #define title
-    player = {}
+    player = {}  #needed to bound screen buttons to app functions
     
     #client side connection
     connection = None  
@@ -694,11 +733,7 @@ class PinnacolaApp(App):
     cards_server = []
     # cards currently selected
     selcards = []
-    #sound = SoundLoader.load('./music/intro.wav')
-    #if sound:
-    #    sound.loop = True
-    #    sound.play()
-
+    
     def on_pause(self):
         return True
 
@@ -706,7 +741,7 @@ class PinnacolaApp(App):
         pass
 
     def build(self):
-        global max_cards, GAMEMODE, SERVER
+        global max_cards, GAMEMODE, SERVER, PLAYERINSTANCE
         #load configurations from ini file
         config = self.config
         max_cards = int(config.get('section1', 'max_cards'))
@@ -726,6 +761,8 @@ class PinnacolaApp(App):
             self.sound.loop = True
             self.sound.play()
         
+        #create global instance for local player to be called from everywhere
+        PLAYERINSTANCE['Local'] = Player(self.playername) #####
         
         if GAMEMODE == "Server":
             # start server
@@ -745,10 +782,11 @@ class PinnacolaApp(App):
         #create instance for current deck 
         DECKINSTANCE = self.currentDeck = Deck(self, 2)  # use 2 decks of 52 cards
                 
-        #create instance for local player and display cards on hand
-        PLAYERINSTANCE['Local'] = self.player[0] = Player(self.playername)
+        # and display cards on hand
+        #####PLAYERINSTANCE['Local'] = self.player[0] = Player(self.playername)
 
-        #PLAYERINSTANCE['Remote'] = self.player[1] = Player('Remote')
+        self.player[0] = PLAYERINSTANCE['Local'] #workaround to bind screen buttons to PLAYERINSTANCE
+        
         
         #disposition of cards on start screen
         cy = [50, 53, 55, 60, 70, 75, 80, 85, 80, 75, 70, 60, 55, 53, 50]
@@ -764,7 +802,7 @@ class PinnacolaApp(App):
             
             cx = cx + 25
             
-            self.player[0].addcard(entry)
+            PLAYERINSTANCE['Local'].addcard(entry)
             try:
                 # load the image
                 picture = Picture(source='atlas://decks/cards/%s' % entry[:-1], rotation=int(rot), x=200+cx , y=cy[i]-120, card=entry)
@@ -803,10 +841,10 @@ class PinnacolaApp(App):
         if GAMEMODE == "Server":
             entry = self.currentDeck.pickacard()
             if entry <>"":
-                self.player[0].addcard(entry)
+                PLAYERINSTANCE['Local'].addcard(entry)
             else:
                 sm.get_screen('pinnacolabackground').info = "No more cards on Deck"
-            if DEBUG: print 'Player 0 hand:',self.player[0].hand
+            if DEBUG: print 'Player 0 hand:',PLAYERINSTANCE['Local'].hand
             return self.putonscreen(entry)
         if GAMEMODE == "Client":
             self.climsg_pickacard()
@@ -979,7 +1017,7 @@ class PinnacolaApp(App):
         if value[1] > DISCARDY-30 and value[0] >200 and self.flag == 0 and instance.condition <> 'pit':
             if DEBUG:print 'Discarded', card
             self.currentDeck.put_ontable(card) #aggiunge al pozzo
-            self.player[0].deletecard(card)  #toglie al giocatore
+            PLAYERINSTANCE['Local'].deletecard(card)  #toglie al giocatore
             instance.selected = 'no'
             instance.condition = 'pit'
             self.numDiscarded += 1
@@ -999,12 +1037,12 @@ class PinnacolaApp(App):
 
             if DEBUG:
                 print "Pit:" ,self.currentDeck.ontable 
-                print "On Hand:",self.player[0].hand
+                print "On Hand:",PLAYERINSTANCE['Local'].hand
 
         #pesca una carta fuori dal pozzo
         if instance.condition=='pit' and value[1] <200 and self.flag==0:
             if DEBUG: print'Picked up from pit',card
-            self.player[0].addcard(card) #aggiunge al giocatore
+            PLAYERINSTANCE['Local'].addcard(card) #aggiunge al giocatore
             self.currentDeck.pick_fromtable(card) #toglie dal pozzo
             self.numDiscarded -=1 
             self.flag = 1
@@ -1167,8 +1205,8 @@ class PinnacolaApp(App):
         line = ""
         for card in cards:
             line += str(card)+"-"
-        line = line +str(self.player[0].left)+"-"+self.playername
-        self.srvmsg_send("DROPPED ", line)
+        line = line +str(PLAYERINSTANCE['Local'].left)+"-"+self.playername
+        self.srvmsg_send("DROPPED", line)  #spazio
 
     def srvmsg_send(self, header, msg):
         '''Server send message msg to all clients. 
@@ -1201,7 +1239,8 @@ class PinnacolaApp(App):
             
         if "DROPPED" in message:
             #receive cards dropped and nr cards left in hand
-            cards = message[8:].split('-')
+            cards = message[8:].split('-')     #8
+            if DEBUG: print"KKKK %s", cards
             self.syncplayer(cla.name,cards[:-1],int(cards[-1]))
 
 
@@ -1210,7 +1249,7 @@ class PinnacolaApp(App):
         other = NAMES[:]
         other.remove(sender)
         for n in other:
-            CONNECTION[n].sendLine(msg)
+            CONNECTION[n].sendLine(msg+"-"+sender)
 
 ############### Client side routines###################################
     def connect_to_server(self):
@@ -1227,7 +1266,7 @@ class PinnacolaApp(App):
         line = ""
         for card in cards:
             line += str(card)+"-"
-        line = line +str(self.player[0].left) # nr cards remained
+        line = line +str(PLAYERINSTANCE['Local'].left) # nr cards remained
         self.climsg_send("DROPPED "+line)
     
     def climsg_sendontable(self, card):
@@ -1251,8 +1290,10 @@ class PinnacolaApp(App):
         '''Handle (decode) messages/requests from clients
             <xxx> are answers to client questions
             xxx are spontaneous messages from server'''
-        global PLAYERINSTANCE
-        if DEBUG: print "Received message from server: %s" % msg
+        global PLAYERINSTANCE, NAMES
+        if DEBUG: print "Message from server: %s" % msg
+
+        
         if "Welcome" in msg:
             self.climsg_send(self.playername)
         elif "exceeded" in msg:
@@ -1262,46 +1303,78 @@ class PinnacolaApp(App):
             if DEBUG: print "not accepted, id exists"
             sm.get_screen('intro').info = "Id taken already, change and try again."
         elif "<INIT>" in msg:
-            if DEBUG: print "Getting cards from server "
             cards = msg[6:].split('-')
             self.cards_server = cards[:-1]
-            #print self.cards_server
+            gamersname= cards[-1].split('§')
+            self.servername= str(gamersname[0].rstrip())
+            NAMES=gamersname[1:-2] #exclude the last name because it is the local player,
+                                   # NAMES stores only the other players names without the server's name !! 
+                                   
+            
+            if DEBUG: 
+                print "Getting cards from server %s" % self.servername
+                print "Players: %s %s" % (self.servername,NAMES)
+
+            #create a new instance for server player 
+            if not(PLAYERINSTANCE.has_key(self.servername)):
+                PLAYERINSTANCE[self.servername]=Player(self.servername)
+                
+            # and a new instance for all previously connected players
+            for na in NAMES:
+                PLAYERINSTANCE[na]=Player(na) #da indicare la posizione!!
+            
+        
+            
             ##now can continue to play after <INIT> is catched
             self.startplay(sm.get_screen('pinnacolabackground'))
+        
         elif "DISCARDED" in msg:
             self.numDiscarded += 1
-            card = msg[10:-2]
+            if "-" in msg:
+                tmp=msg.split('-')
+                msg=tmp[0]
+            card = msg[10:].rstrip()
             self.currentDeck.put_ontable(card)
             self.show_pit(card, sm.get_screen('pinnacolabackground'))
         elif "<DECK>" in msg:
             card = msg[6:-2]
             if card <>"":
-                self.player[0].addcard(card)
+                PLAYERINSTANCE['Local'].addcard(card)
                 self.putonscreen(card)
             else:
                 sm.get_screen('pinnacolabackground').info = "No more cards."
         elif "PICKPIT" in msg:
+            # if the message is relayed from server get the original sender from the 
+            # relayed message and stripp it off
+            if "-" in msg:
+                tmp=msg.split('-')
+                msg=tmp[0]
+                sender=tmp[1]
             self.numDiscarded -=1
-            card = msg[8:-2]
+            card = msg[8:].rstrip()
             self.currentDeck.pick_fromtable(card)
             self.destroy(card)
         elif "DROPPED" in msg:
-            campi= msg[9:].split('-')
+            campi= msg[8:].split('-')  #9
             inhand = campi[-2]
             cards = campi[:-2]
             name = campi[-1].rstrip()
             i=0
             print "<"+name+">","DROPPED",cards,"left in hand",inhand
-            # create a new player instance if it does not exist and populate with data
+            self.syncplayer(name,cards,inhand)
+        elif "NEWGAMER" in msg:
+            #self.afterme = self.afterme + 1
+            name = msg[9:].rstrip()
+            # create new player instance
             if not(PLAYERINSTANCE.has_key(name)):
-                PLAYERINSTANCE[name]=Player(name)
-            
-            self.syncplayer(name,cards,inhand)    
+                PLAYERINSTANCE[name]=Player(name) ## da indicare in quale posizione
+                NAMES.append(name)
 
-    def syncplayer(self,name,cards,inhand):
+    def syncplayer(self,name,cards='',inhand=''):
         '''syncronize datas on players screens'''
         global PLAYERINSTANCE
-        if DEBUG:print PLAYERINSTANCE[name].screen #print the name of the assigned screen
+        if DEBUG:print "Screen %s assigned to %s player" %(PLAYERINSTANCE[name].screen, name)
+        
         PLAYERINSTANCE[name].putdown(cards)
         PLAYERINSTANCE[name]._nr = int(inhand)
         i=0
@@ -1312,8 +1385,6 @@ class PinnacolaApp(App):
             i +=1
             self.putonscreen(card,PLAYERINSTANCE[name].screen,100,100,x,180-(20*i))
             self.animation(card,PLAYERINSTANCE[name].screen)
-            PLAYERINSTANCE[name].addpoints(card)
-            
         scr = sm.get_screen(PLAYERINSTANCE[name].screen)
         scr.points=PLAYERINSTANCE[name].points
 
@@ -1321,10 +1392,10 @@ class PinnacolaApp(App):
         '''Print on console local players' data'''
         print "Local player"
         print " : selected", self.selcards
-        print " : on hand ", self.player[0].hand
-        print " : down    ", self.player[0].down
-        print " : points  ", self.player[0].points
-        print " : nr cards", self.player[0].left
+        print " : on hand ", PLAYERINSTANCE['Local'].hand
+        print " : down    ", PLAYERINSTANCE['Local'].down
+        print " : points  ", PLAYERINSTANCE['Local'].points
+        print " : nr cards", PLAYERINSTANCE['Local'].left
         print " : pit     ", self.currentDeck.ontable
         for n in NAMES:
             print " Player <%s>" % n
@@ -1386,6 +1457,18 @@ class Chat(LineReceiver):
     def handle_GETNAME(self, name): 
         global CONNECTION, NAMES, DECKINSTANCE, max_cards, PLAYERINSTANCE
         
+        def relay_name(dt,instance=self):
+            # send gamer names to every one else
+            tmp=NAMES[:]
+            tmp.remove(self.name)
+            newgamer=NAMES[-1]
+            if DEBUG:
+                print "Gamers: %s" % NAMES
+                print "Newgamer: %s" % (newgamer,)
+            for n in tmp:
+                CONNECTION[n].sendLine('NEWGAMER %s' %(newgamer,))
+            
+        
         def delayed(dt,instance=self):
             instance.sendLine("DISCARDED "+ str(DECKINSTANCE.pit()[0]))
         
@@ -1407,29 +1490,28 @@ class Chat(LineReceiver):
         self.state = "CHAT"
         CONNECTION[name] = self  # link chat instances to global variable to be used outside
         NAMES.append(name)
-        PLAYERINSTANCE[name] = Player(name) # create new player instance 
+        PLAYERINSTANCE[name] = Player(name) # create new player instance (server side)
         
         #refresh player screen name
-        sm.get_screen(PLAYERINSTANCE[name].screen).gamer=name 
+        ##sm.get_screen(PLAYERINSTANCE[name].screen).gamer=name 
                 
-        # refresh also name in main screen  ###ugly!!!
-        if len(NAMES) == 1:
-            sm.get_screen('pinnacolabackground').gamer2 = name
-        if len(NAMES) == 2:
-            sm.get_screen('pinnacolabackground').gamer3 = name
-        if len(NAMES) == 3:
-            sm.get_screen('pinnacolabackground').gamer4 = name
-        
-        
-        
+
         message = ""
         for i in range(max_cards):
             message = message + str(Deck.pickacard(DECKINSTANCE))+ "-"
-
-        self.sendLine('<INIT>'+str(message))
+        gamersname= "§"
+        for n in NAMES:
+            gamersname = gamersname + str(n) +"§"
+        #send init message with cards in hand, name of the server and other players
+        self.sendLine('<INIT>'+str(message)+str(PLAYERINSTANCE['Local'].name)+str(gamersname))
+        # delay 1 sec
+        Clock.schedule_once(relay_name,1)
         #delay 1 sec
-        Clock.schedule_once(delayed,1)
-        #self.sendLine("DISCARDED"+ str(DECKINSTANCE.pit()[0]))
+        Clock.schedule_once(delayed,2)
+        
+        
+        
+        
 
 
 class ChatFactory(Factory):

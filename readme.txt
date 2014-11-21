@@ -39,7 +39,16 @@ Optionally
 Usage
 -----
 
-1) Install the dependencies listed above.
+1) Install the dependencies listed above:
+    
+    Python:
+        
+        
+    Kivy:
+    
+
+    Twisted:
+        pip install twisted
 
 2) On Linux run python ./main.py
     It can be started from console in server mode by 
@@ -53,7 +62,8 @@ Usage
         
     Open port 8123 for multiplayer !
     
-3) On Windows (yet to be tested)
+3) On Windows 7 or later:
+    draw the main.py file to kivy.bat file in kivy directory.
 
 4) On Android you have to install Kivy-Launcer to run the application. 
     You have to copy all the sources into kivy directory.
@@ -64,10 +74,8 @@ Usage
 
    Optionally you could compile the sources using buildozer.
 
-
-It is a multi user game, minimum 2 players needed, maximum 4.
-One terminal has to be started as Server and the other as clients .
-In 'settings' you have to set your user name and the server ip address to connect to.
+5) On Mac OS:
+    (Someone has tried?)
 
 
 
