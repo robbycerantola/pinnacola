@@ -1,6 +1,6 @@
 git clone git://git.code.sf.net/p/pinnacola/code pinnacola-code
 
-Pinnacola 0.8.1  2014(c) by Robby Cerantola                   12/11/2014
+Pinnacola 0.8.2  2014(c) by Robby Cerantola                   22/11/2014
 
 Features
 --------
@@ -70,10 +70,13 @@ Usage
     To start as client for now go into settings and change
     game mode from Server to Client and then restart.   (Working on this issue.......)
     From now on it will start in Client mode untill you change again in settings.
- 
+    It is important to set your android device not to sleep (screen saver) when playing.
+    If your device goes to sleep, the game will not be updated. (Any help ?.....)
 
-   Optionally you could compile the sources using buildozer.
-
+    Optionally you could compile the sources using buildozer, setting wakelock 
+    permission and wakelock flag. 
+       (show here how to do it...........)
+    
 5) On Mac OS:
     (Someone has tried?)
 

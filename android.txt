@@ -1,3 +1,4 @@
 title=Pinnacola Test
 author=Robby Cerantola
 orientation=landscape
+wakelock=False

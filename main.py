@@ -24,7 +24,7 @@ the screenmanager widget and Twisted.
 
 '''
 
-__version__ = '0.8.2'
+__version__ = '0.8.3'
 #v 0.0 deck, userinterface
 #v 0.1 simple net messages (Twisted), server only
 #v 0.2 implement screen manager
@@ -37,6 +37,8 @@ __version__ = '0.8.2'
 #v 0.8 multiplayer, no rules check yet BUGGED!!
 #v 0.8.1 cleanup
 #v 0.8.2 refactoring, 3 players
+#V 0.8.3 android compatible, 4 players
+
 
 import kivy
 kivy.require('1.1.2')
@@ -75,6 +77,9 @@ from kivy.core.audio import SoundLoader
 from kivy.clock import Clock
 
 from functools import partial
+
+from plyer import tts  #enable text to seech
+
 
 import sys
 import random
@@ -608,7 +613,7 @@ class Player():
         
         #assign a name to each player
         sm.get_screen(self.screen).gamer = name
-        if DEBUG: print" Player class:",name
+        if DEBUG: print" Created player instance ",name
 
     def gamername(self,n):
         return 'none' if len(NAMES) <2 else NAMES[n-1] 
@@ -1305,7 +1310,7 @@ class PinnacolaApp(App):
         elif "<INIT>" in msg:
             cards = msg[6:].split('-')
             self.cards_server = cards[:-1]
-            gamersname= cards[-1].split('§')
+            gamersname= cards[-1].split('#')
             self.servername= str(gamersname[0].rstrip())
             NAMES=gamersname[1:-2] #exclude the last name because it is the local player,
                                    # NAMES stores only the other players names without the server's name !! 
@@ -1499,9 +1504,9 @@ class Chat(LineReceiver):
         message = ""
         for i in range(max_cards):
             message = message + str(Deck.pickacard(DECKINSTANCE))+ "-"
-        gamersname= "§"
+        gamersname= "#"
         for n in NAMES:
-            gamersname = gamersname + str(n) +"§"
+            gamersname = gamersname + str(n) +"#"
         #send init message with cards in hand, name of the server and other players
         self.sendLine('<INIT>'+str(message)+str(PLAYERINSTANCE['Local'].name)+str(gamersname))
         # delay 1 sec
