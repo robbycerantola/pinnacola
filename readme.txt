@@ -1,6 +1,6 @@
 git clone git://git.code.sf.net/p/pinnacola/code pinnacola-code
 
-Pinnacola 0.8.2  2014(c) by Robby Cerantola                   22/11/2014
+Pinnacola 0.8.5 2016(c) by Robby Cerantola                   25/04/2016
 
 Features
 --------
@@ -16,7 +16,8 @@ In brief
 Pinnacola is a multi user game, minimum 2 players needed, maximum 4.
 First one terminal has to be started as Server by changing the mode in 'settings'.
 Then the other terminals have to start as Clients in succession .
-In 'settings' every client has to set a unique user name and the Server ip address to connect to.
+In 'settings' every client has to set a unique user name and the Server ip address
+ to connect to.
 
 
 Dependencies
@@ -24,7 +25,7 @@ Dependencies
 
   
   * Python 2.7
-  * Kivy 1.1.2 or later
+  * Kivy 1.9.1 or later
   * Twisted 
   
 
@@ -65,7 +66,7 @@ Usage
 3) On Windows 7 or later:
     draw the main.py file to kivy.bat file in kivy directory.
 
-4) On Android you have to install Kivy-Launcer to run the application. 
+4) On Android you have to install Kivy-Launcher to run the application. 
     You have to copy all the sources into kivy directory.
     To start as client for now go into settings and change
     game mode from Server to Client and then restart.   (Working on this issue.......)
@@ -111,7 +112,7 @@ Simple game functionality, multiuser .
 No rules checking yet.
 Graphic interface incomplete.
 Lot of debug informations
-
+If android goes to sleep, you loose messages from server.
 
 
 Future development
@@ -128,7 +129,7 @@ Thanks
 
 to PlayOnLoop.com for the Intro loop music; 
 
-to my grandparents Mario and Anna, who teached me this game when 
+to my grandparents Mario and Anna, who have taught me this game when 
 I was a child.
 
 

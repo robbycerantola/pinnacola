@@ -3,7 +3,7 @@
 #:PEP8 -W293
 
 '''
-Pinnacola        Copyright (c) 2014  by Robby Cerantola
+Pinnacola        Copyright (c) 2014 2015 2016 by Robby Cerantola
 =======================================
 
 This is a basic pinnacola cards game, using kivy ,the scatter widget
@@ -24,7 +24,7 @@ the screenmanager widget and Twisted.
 
 '''
 
-__version__ = '0.8.3'
+__version__ = '0.8.5'
 #v 0.0 deck, userinterface
 #v 0.1 simple net messages (Twisted), server only
 #v 0.2 implement screen manager
@@ -38,10 +38,11 @@ __version__ = '0.8.3'
 #v 0.8.1 cleanup
 #v 0.8.2 refactoring, 3 players
 #V 0.8.3 android compatible, 4 players
-
+#v 0.8.4 raspberry compatible , internationalization
+#v 0.8.5 external kv file
 
 import kivy
-kivy.require('1.1.2')
+kivy.require('1.9.0')
 
 from kivy.config import Config
 Config.set('graphics', 'width', '800')
@@ -61,29 +62,30 @@ from twisted.internet.protocol import Factory
 from kivy.app import App
 from kivy.logger import Logger
 from kivy.uix.scatter import Scatter
-from kivy.properties import StringProperty, ObjectProperty, NumericProperty
-from kivy.atlas import Atlas
+from kivy.properties import StringProperty, NumericProperty
 from kivy.animation import Animation
 # FIXME this shouldn't be necessary
-from kivy.core.window import Window
-from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import Button
+#from kivy.core.window import Window    #create Opengl context
+
+#from kivy.uix.floatlayout import FloatLayout
+#from kivy.uix.boxlayout import BoxLayout
+#from kivy.uix.button import Button
+
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.anchorlayout import AnchorLayout
-from kivy.lang import Builder
+from kivy.lang import Builder,Observable, EventDispatcher
 from kivy.core.audio import SoundLoader
 from kivy.clock import Clock
-
-from functools import partial
-
-from plyer import tts  #enable text to seech
-
 
 import sys
 import random
 import re
+from os.path import join, dirname
+
+import gettext
+
+language='it' # default language on first start up
 
 DEBUG = 1                 # set to 1 to get extra debug info
 
@@ -93,394 +95,58 @@ GAMEMODE = None           # can be 'Server' or 'Client'
 SERVER = ''
 PORT = 8123               #Twisted connection port
 CONNECTION = {}           #Twisted connections instances
-NAMES = []                # NAMES stores only the other players names without the server's name !! 
+NAMES = []                # NAMES stores only the other players names no server name included!! 
 DECKINSTANCE = None
 PLAYERINSTANCE = {}       #Players instances including local one
 SELCARDS = []
 
-# BUG?!? Cannot put this on external kv file:
-# screen manager seems to work only with inline statements!!
-Builder.load_string("""
-#:kivy 1.0
-#:import kivy kivy
-#:import win kivy.core.window
-#:import SlideTransition kivy.uix.screenmanager.SlideTransition
-#:import FadeTransition kivy.uix.screenmanager.FadeTransition
-
-<Picture>:
-    # each time a picture is created, the image can delay the loading
-    # as soon as the image is loaded, ensure that the center is changed
-    # to the center of the screen.
-    on_size: self.center = win.Window.center
-    size: image.size
-    size_hint: None, None
-
-    Image:
-        id: image
-        source: root.source
-
-        # create initial image to be 84x122 pixels
-        size: 84, 122 #/ self.image_ratio
-
-        # add shadow background
-        canvas.before:
-            Color:
-                rgba: 1,root.c,root.c,.8
-            BorderImage:
-                source: 'shadow32b.png'
-                border: (33,33,33,33)
-                size:(self.width+66, self.height+66)
-                pos: (-33,-33)
 
 
-<IntroScreen>:
-    canvas:
-        Rectangle:
-            source: 'pinnacolook.jpg'
-            size: self.size
+class Lang(Observable):
+    observers = []
+    lang = None
 
-    BoxLayout:
-        #padding: 10
-        #spacing: 10
-        #height: 44
-        size_hint: 1, None
-        Button:
-            background_color: (1,1,1,.5)
-            text: 'Goto settings'
-            on_press: app.open_settings(self)
-        Button:
-            background_color: (1,1,1,.5)
-            text: 'Play game'
-            on_press: root.manager.current = 'pinnacolabackground'; app.sound.stop()
-        Button:
-            background_color: (1,1,1,.5)
-            text: 'Rules of game'
-            on_press:root.manager.transition = FadeTransition(); root.manager.current = 'rules'
-    BoxLayout:
-        #pos_hint: {'top': 1}
-        
-        Label:
-            color: (0,0,0,1)
-            
-            text: 'Pinnacola v %s (c) 2014 \\n by Robby Cerantola' % root.ver
-    
- 
-            
-        Label:
-            color: (0,0,0,1)
-            text: root.info
-<RulesScreen>:
-    canvas:
-        Rectangle:
-            source: 'pinnacolook.jpg'
-            size: self.size
-    BoxLayout:
-        orientation: "vertical"
-        #size_hint: None, 1
-        ScrollView:
-            TextInput:
-                color: (0,0,0,1)
-                background_color: (1,1,1,.6)
-                text: root.rulestxt
-    BoxLayout:
-        orientation: "horizontal"
-        Button:
-            size_hint: 1, 0.1
-            pos_hint: { 0.5: "center_x" }
-            background_color: (1,1,1,.5)
-            text: 'Play game'
-            on_press: root.manager.current = 'pinnacolabackground'; app.sound.stop()
-        
-        Button:
-            size_hint: 1, 0.1
-            background_color: (1,1,1,.5)
-            text: 'Goto settings'
-            on_press: app.open_settings(self)
+    def __init__(self, defaultlang):
+        super(Lang, self).__init__()
+        self.ugettext = None
+        self.lang = defaultlang
+        self.switch_lang(self.lang)
 
-<SettingsScreen>:
-    BoxLayout:
-        Button:
-            text: 'My settings button'
-        Button:
-            text: 'Back to menu'
-            on_press: root.manager.current = 'intro'
+    def _(self, text):
+        return self.ugettext(text)
 
-<Player2Screen>
-    canvas:
-        Color:
-            rgb: 1, 1, 1
-        Rectangle:
-            source: 'CardTable.png'
-            size: self.size
+    def fbind(self, name, func, args, **kwargs):
+        if name == "_":
+            self.observers.append((func, args, kwargs))
+        else:
+            return super(Lang, self).fbind(name, func, *largs, **kwargs)
 
-    BoxLayout:
-        padding: 10
-        spacing: 10
-        size_hint: 1, None
-        pos_hint: {'top': 1}
-        height: 44
-        Image:
-            size_hint: None, None
-            size: 24, 24
-            source: 'data/logo/kivy-icon-24.png'
-        Label:
-            height: 24
-            #text_size: self.size
-            color: (.5, .5, .5, .8)
-            text: 'Pinnacola %s ' % root.ver
-            valign: 'bottom'
-        Label:
-            text: 'Points: %s' %root.points
-            
+    def funbind(self, name, func, args, **kwargs):
+        if name == "_":
+            key = (func, args, kwargs)
+            if key in self.observers:
+                self.observers.remove(key)
+        else:
+            return super(Lang, self).funbind(name, func, *args, **kwargs)
+
+    def switch_lang(self, lang):
+        # get the right locales directory, and instanciate a gettext
+        locale_dir = join(dirname(__file__), 'data', 'locales')
+        locales = gettext.translation('pinnacola', locale_dir, languages=[lang])
+        self.ugettext = locales.ugettext
+
+        # update all the kv rules attached to this text
+        for func, largs, kwargs in self.observers:
+            func(largs, None, None)
 
 
-    FloatLayout:
-        Label:
-            text: 'Player %s' %root.gamer
-        Button:
-            background_normal: 'decks/backcards.png'
-            text: 'Me'
-            pos_hint: {'x': .0,'y': .5}
-            size_hint: None, None
-            height: dp(80)
-            width: dp(100)
-            on_press:root.manager.transition = FadeTransition();root.manager.current = 'pinnacolabackground'
 
-        Button:
-            background_normal: 'decks/backcards.png'
-            text: 'Player 3'
-            pos_hint: {'x': .4,'y': .7}
-            size_hint: None, None
-            height: dp(80)
-            width: dp(100)
-            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player3'
-        Button:
-            background_normal: 'decks/backcards.png'
-            text: 'Player 4'
-            pos_hint: {'x': .8,'y': .5}
-            size_hint: None, None
-            height: dp(80)
-            width: dp(100)
-            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player4'
+tr = Lang(language) #instantiate curent language
 
-<Player3Screen>
-    canvas:
-        Color:
-            rgb: 1, 1, 1
-        Rectangle:
-            source: 'CardTable.png'
-            size: self.size
+# BUG?!? Can use  external kv file only by declaring it explicitely:
+# screen manager seems to work only with inline statements!
 
-    BoxLayout:
-        padding: 10
-        spacing: 10
-        size_hint: 1, None
-        pos_hint: {'top': 1}
-        height: 44
-        Image:
-            size_hint: None, None
-            size: 24, 24
-            source: 'data/logo/kivy-icon-24.png'
-        Label:
-            height: 24
-            #text_size: self.size
-            color: (.5, .5, .5, .8)
-            text: 'Pinnacola %s ' % root.ver
-            valign: 'bottom'
-        Label:
-            text: 'Points: %s' %root.points
-
-    FloatLayout:
-        Label:
-            text: 'Player %s' %root.gamer
-        
-        Button:
-            #background_color: (1,1,1,.5)
-            background_normal: 'decks/backcards.png'
-            text: 'Me'
-            pos_hint: {'x': .4,'y': .7}
-            size_hint: None, None
-            height: dp(80)
-            width: dp(100)
-            on_press:root.manager.transition = FadeTransition();root.manager.current = 'pinnacolabackground'
-
-        Button:
-            background_normal: 'decks/backcards.png'
-            text: "Player 2"
-            pos_hint: {'x': .0,'y': .5}
-            size_hint: None, None
-            height: dp(80)
-            width: dp(100)
-            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player2'
-        Button:
-            #background_color: (1,1,1,.5)
-            background_normal: 'decks/backcards.png'
-            text: 'Player 4' 
-            pos_hint: {'x': .8,'y': .5}
-            size_hint: None, None
-            height: dp(80)
-            width: dp(100)
-            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player4'
-
-<Player4Screen>
-    canvas:
-        Color:
-            rgb: 1, 1, 1
-        Rectangle:
-            source: 'CardTable.png'
-            size: self.size
-
-    BoxLayout:
-        padding: 10
-        spacing: 10
-        size_hint: 1, None
-        pos_hint: {'top': 1}
-        height: 44
-        Image:
-            size_hint: None, None
-            size: 24, 24
-            source: 'data/logo/kivy-icon-24.png'
-        Label:
-            height: 24
-            #text_size: self.size
-            color: (.5, .5, .5, .8)
-            text: 'Pinnacola %s ' % root.ver
-            valign: 'bottom'
-        Label:
-            text: 'Points: %s' %root.points
-
-    FloatLayout:
-        Label:
-            text: 'Player %s' %root.gamer
-        
-        Button:
-            #background_color: (1,1,1,.5)
-            background_normal: 'decks/backcards.png'
-            text: 'Me'
-            pos_hint: {'x': .8,'y': .5}
-            size_hint: None, None
-            height: dp(80)
-            width: dp(100)
-            on_press:root.manager.transition = FadeTransition();root.manager.current = 'pinnacolabackground'
-
-        Button:
-            #background_color: (1,1,1,.5)
-            background_normal: 'decks/backcards.png'
-            text: 'Player 2'
-            pos_hint: {'x': .0,'y': .5}
-            size_hint: None, None
-            height: dp(80)
-            width: dp(100)
-            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player2'
-        Button:
-            background_normal: 'decks/backcards.png'
-            text: 'Player 3'
-            pos_hint: {'x': .4,'y': .7}
-            size_hint: None, None
-            height: dp(80)
-            width: dp(100)
-            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player3'
-
-<PinnacolaBackground>:
-    canvas:
-        Color:
-            rgb: 1, 1, 1
-        Rectangle:
-            source: 'CardTable.png'
-            size: self.size
-        
-        Color:
-            rgb: 0, 1, 0
-        Rectangle:
-            source: 'discardzone.png'
-            pos: 250,245
-            size: 400,80
-        
-    Button:
-        text: 'Pick me!'
-        background_normal: 'atlas://decks/cards/br'
-        #pos: 175, 250
-        pos_hint: {'x': .2,'y':.5}
-        size_hint: None, None
-        height: dp(90)
-        width: dp(60)
-        on_press:app.showcard()
-        
-    BoxLayout:
-        padding: 10
-        spacing: 10
-        size_hint: 1, None
-        pos_hint: {'top': 1}
-        height: 44
-        Image:
-            size_hint: None, None
-            size: 24, 24
-            source: 'data/logo/kivy-icon-24.png'
-        Label:
-            height: 24
-            #text_size: self.size
-            color: (.5, .5, .5, .8)
-            text: 'Pinnacola %s ' % root.ver
-            valign: 'bottom'
-        Label:
-            text: 'Points: %s' %root.points
-
-        Button:
-            text: 'Drop'
-            on_press:app.putontable(app.player[0])
-        Button:
-            text: 'Unselect'
-            on_press:app.unselectall()
-        Button:
-            text: 'Stick'
-            on_press:app.attach(app.player[0])
-        Button:
-            text: 'Status'
-            on_press:app.status()
-
-    BoxLayout:
-        Label:
-            text: root.info
-            color: (.5, .5, .5, .8)
-            
-        
-    FloatLayout:
-        Button:
-            #4
-            #background_color: (1,1,1,1)
-            background_normal: 'decks/backcards.png'
-            text: '%s' %root.gamer4
-            pos_hint: {'x': .8,'y': .5}
-            #size_hint: .2,.2
-            size_hint: None, None
-            height: dp(80)
-            width: dp(100)
-            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player4'
-        Button:
-            #2
-            #background_color: (1,1,1,.5)
-            background_normal: 'decks/backcards.png'
-            text: '%s' %root.gamer2
-            pos_hint: {'x': .0,'y':.5}
-            #pos_hint: {'center_y':1}
-            #size_hint: .2,.2
-            size_hint: None, None
-            height: dp(80)
-            width: dp(100)
-            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player2'
-        Button:
-            #3
-            #background_color: (1,1,1,.5)
-            background_normal: 'decks/backcards.png'
-            text: '%s' %root.gamer3
-            pos_hint: {'x': .4,'y':.7}
-            #size_hint: .2,.2
-            size_hint: None, None
-            height: dp(80)
-            width: dp(100)
-            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player3'
-        
-""")
+Builder.load_file('pinnacola1.kv')
 
 
 class Deck():
@@ -613,7 +279,7 @@ class Player():
         
         #assign a name to each player
         sm.get_screen(self.screen).gamer = name
-        if DEBUG: print" Created player instance ",name
+        if DEBUG: print tr._("Created player instance "),name
 
     def gamername(self,n):
         return 'none' if len(NAMES) <2 else NAMES[n-1] 
@@ -678,7 +344,7 @@ class PinnacolaBackground(Screen):
     
     ver = __version__
     points = NumericProperty(0)
-    info = StringProperty("Welcome!")
+    info = StringProperty(tr._("Welcome!"))
     gamer2 = StringProperty('2')
     gamer3 = StringProperty('3')
     gamer4 = StringProperty('4')
@@ -700,12 +366,13 @@ class IntroScreen(Screen):
 class RulesScreen(Screen):
     '''Introduzione al gioco'''
     import codecs
-        #load rules text
+    #load rules text in proper language
+    rulesfile = "rules"+str(language)+".txt"
     try:
-        with codecs.open("rules.txt", "r", encoding="utf8") as myfile:
+        with codecs.open(rulesfile, "r", encoding="utf8") as myfile:
             rulestxt = "".join(line for line in myfile)
     except EnvironmentError:
-        rulestxt = "Rules file not found !"
+        rulestxt = tr._("Rules file not found !")
 
 
 class SettingsScreen(Screen):
@@ -738,7 +405,12 @@ class PinnacolaApp(App):
     cards_server = []
     # cards currently selected
     selcards = []
-    
+
+    lang = StringProperty(language) #set default language
+
+    def on_lang(self, instance, lang):
+        tr.switch_lang(lang)
+
     def on_pause(self):
         return True
 
@@ -746,13 +418,13 @@ class PinnacolaApp(App):
         pass
 
     def build(self):
-        global max_cards, GAMEMODE, SERVER, PLAYERINSTANCE
+        global max_cards, GAMEMODE, SERVER, PLAYERINSTANCE, language
         #load configurations from ini file
         config = self.config
         max_cards = int(config.get('section1', 'max_cards'))
         if GAMEMODE is None: 
             GAMEMODE = config.get('section1', 'gamemode')
-            sm.get_screen('intro').info = "%s mode, waiting for connections.." %(GAMEMODE,)
+            sm.get_screen('intro').info = "%s mode," %(GAMEMODE) + tr._(" waiting for connections..")
         self.playername = config.get('section1', 'name')
         SERVER = config.get('section1', 'serverip')
         # card y position and discarded flag
@@ -760,7 +432,10 @@ class PinnacolaApp(App):
         self.oldinstance = None
         
         intromusic = int( config.get('section1', 'intromusic'))
-
+        
+        language = config.get('section1','language')  #set language from ini file
+        tr.switch_lang(language)
+        
         self.sound = SoundLoader.load('./music/intro.wav')
         if self.sound and intromusic:
             self.sound.loop = True
@@ -802,10 +477,10 @@ class PinnacolaApp(App):
             if GAMEMODE == "Server":
                 entry = self.currentDeck.pickacard()
             else:
-                #display cards received from Server 
+                # display cards received from Server
                 entry = self.cards_server[i]
-            
-            cx = cx + 25
+
+            cx += 25
             
             PLAYERINSTANCE['Local'].addcard(entry)
             try:
@@ -821,7 +496,7 @@ class PinnacolaApp(App):
             root.add_widget(picture)
         
 
-        #Put first card in the pit
+        # Put first card in the pit
         if GAMEMODE == "Server":
             entry = self.currentDeck.pickacard()
             self.currentDeck.put_ontable(entry)
@@ -860,7 +535,7 @@ class PinnacolaApp(App):
             # load the image
             picture = Picture(source='atlas://decks/cards/%s' % entry[:-1], scale=0.7,do_rotation=False, x=xi , y=yi, card=entry)
             def picbind(dt,picture=picture):
-                #helper function to bind on pos after an animation takes place
+                # helper function to bind on pos after an animation takes place
                 picture.bind(pos=self.callback_pos)
             anim = Animation(x=xf, y=yf, scale=1)
             anim.start(picture)
@@ -877,7 +552,7 @@ class PinnacolaApp(App):
     def attach(self, player):
         '''Add a card to on table cards to get more points'''
         def common(card):
-            #helper function
+            # helper function
             player.deletecard(card)
             player.addpoints(card)
             self.animation(card)
@@ -922,7 +597,7 @@ class PinnacolaApp(App):
                 if GAMEMODE == "Client": self.climsg_dropped(self.selcards)
                 if GAMEMODE == "Server": self.srvmsg_dropped(self.selcards)
             else:
-                print "Invalid"
+                if DEBUG:print "Invalid"
                 screen.info = "Invalid"
             self.unselectall()
             #refresh player's screen 
@@ -938,6 +613,7 @@ class PinnacolaApp(App):
         config.set('section1','name','')
         config.set('section1','serverip','')
         config.set('section1','intromusic','1')
+        config.set('section1','language','en')
 
     def build_settings(self, settings):
         """create configuration pannel"""
@@ -976,13 +652,20 @@ class PinnacolaApp(App):
                 "title": "Intro music",
                 "desc": "Play music in intro screen.",
                 "section": "section1",
-                "key": "intromusic"}
+                "key": "intromusic"},
+                
+                {"type": "options",
+                "title": "Language",
+                "desc": "Choose your favourite language",
+                "section":"section1",
+                "key": "language",
+                "options": ["en","it"]}
                    ]"""
                    
         settings.add_json_panel('Pinnacola',self.config, data=jsondata)
 
     def on_config_change(self, config, section, key, value):
-        global SERVER, GAMEMODE
+        global SERVER, GAMEMODE, language
         if config is not self.config:
             return
         token = (section, key)
@@ -1001,7 +684,10 @@ class PinnacolaApp(App):
                 self.sound.loop = True
                 self.sound.play()
             
-            
+        if token == ('section1','language'):
+            language = value
+            print language
+            tr.switch_lang(language)    
 
     def callback_pos(self,instance,value):
         #se la carta viene trascinata nella discard zone allora viene scartata

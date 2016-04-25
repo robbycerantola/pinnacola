@@ -1,0 +1,104 @@
+# Example for an internationalized Kivy app
+# Copyright (C) 2013 Mathieu Virbel
+# This file is distributed under the same license as the Kivy package.
+# Mathieu Virbel <mat@kivy.org>, 2013
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2016-04-23 23:11+0300\n"
+"PO-Revision-Date: 2013-08-01 15:36+0200\n"
+"Last-Translator: Mathieu Virbel <mat@kivy.org>\n"
+"Language-Team: Mathieu Virbel <mat@kivy.org>\n"
+"Language: English\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: main.py:287
+msgid "Created player instance "
+msgstr ""
+
+#: main.py:352
+msgid "Welcome!"
+msgstr ""
+
+#: main.py:379
+msgid "Rules file not found !"
+msgstr ""
+
+#: main.py:431
+msgid " waiting for connections.."
+msgstr ""
+
+#: pinnacola1.kv:47 pinnacola1.kv:95
+msgid "Goto settings"
+msgstr ""
+
+#: pinnacola1.kv:51 pinnacola1.kv:89
+msgid "Play game"
+msgstr ""
+
+#: pinnacola1.kv:55
+msgid "Rules of game"
+msgstr ""
+
+#: pinnacola1.kv:101
+msgid "My settings button"
+msgstr ""
+
+#: pinnacola1.kv:103
+msgid "Back to menu"
+msgstr ""
+
+#: pinnacola1.kv:131 pinnacola1.kv:248 pinnacola1.kv:325
+#, python-format
+msgid "Points: %s"
+msgstr ""
+
+#: pinnacola1.kv:149 pinnacola1.kv:276
+msgid "Player 3"
+msgstr ""
+
+#: pinnacola1.kv:157 pinnacola1.kv:216
+msgid "Player 4"
+msgstr ""
+
+#: pinnacola1.kv:189
+msgid "Points:"
+msgstr ""
+
+#: pinnacola1.kv:193 pinnacola1.kv:253
+#, python-format
+msgid "Player %s"
+msgstr ""
+
+#: pinnacola1.kv:207 pinnacola1.kv:268
+msgid "Player 2"
+msgstr ""
+
+#: pinnacola1.kv:245
+#, python-format
+msgid "Pinnacola %s "
+msgstr ""
+
+#: pinnacola1.kv:299
+msgid "Pick me!"
+msgstr ""
+
+#: pinnacola1.kv:328
+msgid "Drop"
+msgstr ""
+
+#: pinnacola1.kv:331
+msgid "Unselect"
+msgstr ""
+
+#: pinnacola1.kv:334
+msgid "Stick"
+msgstr ""
+
+#: pinnacola1.kv:337
+msgid "Status"
+msgstr ""

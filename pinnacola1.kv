@@ -1,0 +1,381 @@
+#:kivy 1.8.0
+#:import kivy kivy
+#:import win kivy.core.window
+#:import SlideTransition kivy.uix.screenmanager.SlideTransition
+#:import FadeTransition kivy.uix.screenmanager.FadeTransition
+#:import tr __main__.tr
+
+<Picture>:
+    # each time a picture is created, the image can delay the loading
+    # as soon as the image is loaded, ensure that the center is changed
+    # to the center of the screen.
+    on_size: self.center = win.Window.center
+    size: image.size
+    size_hint: None, None
+
+    Image:
+        id: image
+        source: root.source
+
+        # create initial image to be 84x122 pixels
+        size: 84, 122 #/ self.image_ratio
+
+        # add shadow background
+        canvas.before:
+            Color:
+                rgba: 1,root.c,root.c,.8
+            BorderImage:
+                source: 'shadow32b.png'
+                border: (33,33,33,33)
+                size:(self.width+66, self.height+66)
+                pos: (-33,-33)
+
+
+<IntroScreen>:
+    canvas:
+        Rectangle:
+            source: 'pinnacolook.jpg'
+            size: self.size
+
+    BoxLayout:
+        #padding: 10
+        #spacing: 10
+        #height: 44
+        size_hint: 1, None
+        Button:
+            background_color: (1,1,1,.5)
+            text: tr._('Goto settings')
+            on_press: app.open_settings(self)
+        Button:
+            background_color: (1,1,1,.5)
+            text: tr._('Play game')
+            on_press: root.manager.current = 'pinnacolabackground'; app.sound.stop()
+        Button:
+            background_color: (1,1,1,.5)
+            text: tr._('Rules of game')
+            on_press:root.manager.transition = FadeTransition(); root.manager.current = 'rules'
+    BoxLayout:
+        #pos_hint: {'top': 1}
+
+        Label:
+            color: (0,0,0,1)
+
+            text: 'Pinnacola v %s (c) 2016\\\n by Robby Cerantola' % root.ver
+
+
+
+        Label:
+            color: (0,0,0,1)
+            text: root.info
+<RulesScreen>:
+    canvas:
+        Rectangle:
+            source: 'pinnacolook.jpg'
+            size: self.size
+    BoxLayout:
+        orientation: "vertical"
+        #size_hint: None, 1
+        ScrollView:
+            TextInput:
+                color: (0,0,0,1)
+                background_color: (1,1,1,.6)
+                text: root.rulestxt
+    BoxLayout:
+        orientation: "horizontal"
+        Button:
+            size_hint: 1, 0.1
+            pos_hint: { 0.5: "center_x" }
+            background_color: (1,1,1,.5)
+            text: tr._('Play game')
+            on_press: root.manager.current = 'pinnacolabackground'; app.sound.stop()
+
+        Button:
+            size_hint: 1, 0.1
+            background_color: (1,1,1,.5)
+            text: tr._('Goto settings')
+            on_press: app.open_settings(self)
+
+<SettingsScreen>:
+    BoxLayout:
+        Button:
+            text: tr._('My settings button')
+        Button:
+            text: tr._('Back to menu')
+            on_press: root.manager.current = 'intro'
+
+<Player2Screen>
+    canvas:
+        Color:
+            rgb: 1, 1, 1
+        Rectangle:
+            source: 'CardTable.png'
+            size: self.size
+
+    BoxLayout:
+        padding: 10
+        spacing: 10
+        size_hint: 1, None
+        pos_hint: {'top': 1}
+        height: 44
+        Image:
+            size_hint: None, None
+            size: 24, 24
+            source: 'data/logo/kivy-icon-24.png'
+        Label:
+            height: 24
+            #text_size: self.size
+            color: (.5, .5, .5, .8)
+            text: 'Pinnacola %s ' % root.ver
+            valign: 'bottom'
+        Label:
+            text: tr._('Points: %s') %root.points
+
+
+
+    FloatLayout:
+        Label:
+            text: 'Player %s' %root.gamer
+        Button:
+            background_normal: 'decks/backcards.png'
+            text: 'Me'
+            pos_hint: {'x': .0,'y': .5}
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'pinnacolabackground'
+
+        Button:
+            background_normal: 'decks/backcards.png'
+            text: tr._('Player 3')
+            pos_hint: {'x': .4,'y': .7}
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player3'
+        Button:
+            background_normal: 'decks/backcards.png'
+            text: tr._('Player 4')
+            pos_hint: {'x': .8,'y': .5}
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player4'
+
+<Player3Screen>
+    canvas:
+        Color:
+            rgb: 1, 1, 1
+        Rectangle:
+            source: 'CardTable.png'
+            size: self.size
+
+    BoxLayout:
+        padding: 10
+        spacing: 10
+        size_hint: 1, None
+        pos_hint: {'top': 1}
+        height: 44
+        Image:
+            size_hint: None, None
+            size: 24, 24
+            source: 'data/logo/kivy-icon-24.png'
+        Label:
+            height: 24
+            #text_size: self.size
+            color: (.5, .5, .5, .8)
+            text: 'Pinnacola %s ' % root.ver
+            valign: 'bottom'
+        Label:
+            text: tr._('Points: %s') % root.points
+
+    FloatLayout:
+        Label:
+            text: tr._('Player %s' %root.gamer)
+
+        Button:
+            #background_color: (1,1,1,.5)
+            background_normal: 'decks/backcards.png'
+            text: 'Me'
+            pos_hint: {'x': .4,'y': .7}
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'pinnacolabackground'
+
+        Button:
+            background_normal: 'decks/backcards.png'
+            text: tr._("Player 2")
+            pos_hint: {'x': .0,'y': .5}
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player2'
+        Button:
+            #background_color: (1,1,1,.5)
+            background_normal: 'decks/backcards.png'
+            text: tr._('Player 4')
+            pos_hint: {'x': .8,'y': .5}
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player4'
+
+<Player4Screen>
+    canvas:
+        Color:
+            rgb: 1, 1, 1
+        Rectangle:
+            source: 'CardTable.png'
+            size: self.size
+
+    BoxLayout:
+        padding: 10
+        spacing: 10
+        size_hint: 1, None
+        pos_hint: {'top': 1}
+        height: 44
+        Image:
+            size_hint: None, None
+            size: 24, 24
+            source: 'data/logo/kivy-icon-24.png'
+        Label:
+            height: 24
+            #text_size: self.size
+            color: (.5, .5, .5, .8)
+            text: tr._('Pinnacola %s ' % root.ver)
+            valign: 'bottom'
+        Label:
+            text: tr._('Points: %s') %root.points
+
+    FloatLayout:
+        Label:
+
+            text: tr._('Player %s' %root.gamer)
+
+        Button:
+            #background_color: (1,1,1,.5)
+            background_normal: 'decks/backcards.png'
+            text: 'Me'
+            pos_hint: {'x': .8,'y': .5}
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'pinnacolabackground'
+
+        Button:
+            #background_color: (1,1,1,.5)
+            background_normal: 'decks/backcards.png'
+            text: tr._('Player 2')
+            pos_hint: {'x': .0,'y': .5}
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player2'
+        Button:
+            background_normal: 'decks/backcards.png'
+            text: tr._('Player 3')
+            pos_hint: {'x': .4,'y': .7}
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player3'
+
+<PinnacolaBackground>:
+    canvas:
+        Color:
+            rgb: 1, 1, 1
+        Rectangle:
+            source: 'CardTable.png'
+            size: self.size
+
+        Color:
+            rgb: 0, 1, 0
+        Rectangle:
+            source: 'discardzone.png'
+            pos: 250,245
+            size: 400,80
+
+    Button:
+        text: tr._('Pick me!')
+        background_normal: 'atlas://decks/cards/br'
+        #pos: 175, 250
+        pos_hint: {'x': .2,'y':.5}
+        size_hint: None, None
+        height: dp(90)
+        width: dp(60)
+        on_press:app.showcard()
+
+    BoxLayout:
+        padding: 10
+        spacing: 10
+        size_hint: 1, None
+        pos_hint: {'top': 1}
+        height: 44
+        Image:
+            size_hint: None, None
+            size: 24, 24
+            source: 'data/logo/kivy-icon-24.png'
+        Label:
+            height: 24
+            #text_size: self.size
+            color: (.5, .5, .5, .8)
+            text: 'Pinnacola %s ' % root.ver
+            valign: 'bottom'
+        Label:
+            text: tr._('Points: %s') %root.points
+
+        Button:
+            text: tr._('Drop')
+            on_press:app.putontable(app.player[0])
+        Button:
+            text: tr._('Unselect')
+            on_press:app.unselectall()
+        Button:
+            text: tr._('Stick')
+            on_press:app.attach(app.player[0])
+        Button:
+            text: tr._('Status')
+            on_press:app.status()
+
+    BoxLayout:
+        Label:
+
+            text: root.info
+            color: (.5, .5, .5, .8)
+
+
+    FloatLayout:
+        Button:
+            #4
+            #background_color: (1,1,1,1)
+            background_normal: 'decks/backcards.png'
+            text: '%s' %root.gamer4
+            pos_hint: {'x': .8,'y': .5}
+            #size_hint: .2,.2
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player4'
+        Button:
+            #2
+            #background_color: (1,1,1,.5)
+            background_normal: 'decks/backcards.png'
+            text: '%s' %root.gamer2
+            pos_hint: {'x': .0,'y':.5}
+            #pos_hint: {'center_y':1}
+            #size_hint: .2,.2
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player2'
+        Button:
+            #3
+            #background_color: (1,1,1,.5)
+            background_normal: 'decks/backcards.png'
+            text: '%s' %root.gamer3
+            pos_hint: {'x': .4,'y':.7}
+            #size_hint: .2,.2
+            size_hint: None, None
+            height: dp(80)
+            width: dp(100)
+            on_press:root.manager.transition = FadeTransition();root.manager.current = 'player3'
